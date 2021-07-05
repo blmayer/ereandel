@@ -119,8 +119,6 @@ args="$@"
 # Save terminal
 tput smcup
 
-echo $(parseurl "$args")
-
 # First request
 fetch $(parseurl "$args") | parsegemini
 
