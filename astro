@@ -1,5 +1,39 @@
 #!/bin/bash
 
+usage() {
+	echo "Astro v0.5.0: Send or read emails from your terminal."
+	echo ""
+	echo "Usage: astro [url]|[option]"
+	echo ""
+	echo "Options:"
+	echo "  -h		show this help"
+	echo "  --help	show this help"
+	echo "  --version	show version info"
+	echo ""
+	echo "Examples:"
+	echo "  astro		Start browsing the default webpage"
+	echo "  astro url	Start browsing url"
+	echo "  astro --help	Show help"
+	echo ""
+	echo "Debugging:"
+	echo "  debug=1 astro	Will start astro in debug mode"
+	echo ""
+	echo "Report bugs to: bleemayer@gmail.com"
+	echo "Home page: <https://www.github.com/blmayer/astro/>"
+	echo "General help: <https://www.github.com/blmayer/astro/wiki>"
+}
+
+version() {
+	echo "astro 0.5.0"
+	echo "Copyright (C) 2021 Brian Mayer."
+	echo "License MIT: MIT License <https://opensource.org/licenses/MIT>"
+	echo "THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,"
+	echo "EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF"
+	echo "MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT."
+	echo ""
+	echo "Written by Brian Lee Mayer."
+}
+
 # Returns the complete url scheme with gemini defaults
 # Parameters: url
 parseurl() {
@@ -20,6 +54,7 @@ parseurl() {
 
 # Formats and prints the gemini response, reads the input from stdin
 printbody() {
+	[ "$debug" ] && echo "Response body:" >&2
 	while read -r line
 	do
 		echo "$line"
@@ -31,6 +66,7 @@ printbody() {
 parsegemini() {
 	# First line is status and meta information
 	read -r status meta
+	[ "$debug" ] && echo "Response header: $status $meta" >&2
 
 	# Validate
 	case "$status" in
@@ -49,7 +85,7 @@ parsegemini() {
 			;;
 		31|32)
 			# Redirect
-			soyuz "$meta"
+			"$0" "$meta"
 			return 0
 			;;
 		40)
@@ -97,16 +133,29 @@ parsegemini() {
 # Fetches the gemini response from server
 # Parameters: proto, host, port and path
 fetch() {
+	[ "$debug" ] && echo "Requesting $1://$2:$3/$4" >&2
 	echo "$1://$2:$3/$4" | openssl s_client \
 		-connect "$2:$3" -crlf -quiet \
 		-ign_eof 2> /dev/null
 }
 
+# Execution
+
 # Restore terminal
 trap "tput rmcup && exit" EXIT SIGINT SIGHUP
 
-# Execution
+# Parse arguments
 args="$*"
+case "$args" in
+	'--help'* | '-h'*)
+		usage
+		exit
+		;;
+	'--version'*)
+		version
+		exit
+		;;
+esac
 
 # Default url
 [ -z "$args" ] && args="gemini.circumlunar.space/"
@@ -119,12 +168,14 @@ fetch $(parseurl "$args") | parsegemini
 
 while :
 do
+	[ "$debug" ] && echo "Awaiting command" >&2
+
 	echo "Press q to quit or new url to navigate to"
 	read -r opt
+	[ "$debug" ] && echo "Read: $opt" >&2
 	[ "$opt" = "q" ] && break
 
 	# Add a separator
 	printf '\n%*s\n' "$(tput cols)" "#" | tr ' ' '#'
 	fetch $(parseurl "$opt") | parsegemini
 done
-
