@@ -1,0 +1,134 @@
+#!/bin/bash
+
+# Returns the complete url scheme with gemini defaults
+# Parameters: url
+parseurl() {
+	# Credits: https://stackoverflow.com/a/6174447/7618649
+	# extract the protocol
+	proto="$(echo $1 | grep :// | sed -e's,^\(.*://\).*,\1,g')"
+	# remove the protocol
+	url="$(echo ${1/$proto/})"
+	# extract the user (if any)
+	user="$(echo $url | grep @ | cut -d@ -f1)"
+	# extract the host and port
+	hostport="$(echo ${url/$user@/} | cut -d/ -f1)"
+	# by request host without port
+	host="$(echo $hostport | sed -e 's,:.*,,g')"
+	# by request - try to extract the port
+	port="$(echo $hostport | sed -e 's,^.*:,:,g' -e 's,.*:\([0-9]*\).*,\1,g' -e 's,[^0-9],,g')"
+	# extract the path (if any)
+	path="$(echo $url | grep / | cut -d/ -f2-)"
+	
+	echo "${proto:-gemini}" "$host" "${port:-1965}" "${path:-index.gmi}"
+	return 0
+}
+
+# Formats and prints the gemini response, reads the input from stdin
+printbody() {
+	while read -r line
+	do
+		echo "$line"
+	done
+}
+
+# Parses the first line from the response
+# Spec draft is here: https://gemini.circumlunar.space/docs/specification.html
+parsegemini() {
+	# First line is status and meta information
+	read status meta
+
+	# Validate
+	case "$status" in
+		10)
+			echo "Input needed"
+			return -1
+			;;
+		11)
+			echo "Sensitive input needed"
+			return -2
+			;;
+		20)
+			# Success
+			printbody
+			return 0
+			;;
+		31|32)
+			# Redirect
+			soyuz "$meta"
+			return 0
+			;;
+		40)
+			echo "Temporary failure"
+			return -3
+			;;
+		41)
+			return -4
+			;;
+		42)
+			return -5
+			;;
+		43)
+			return -6
+			;;
+		44)
+			return -7
+			;;
+		51)
+			echo "Page not found!"
+			return -9
+			;;
+		52)
+			return -10
+			;;
+		53)
+			return -11
+			;;
+		59)
+			echo "Bad request"
+			return -12
+			;;
+		60)
+			return -13
+			;;
+		61)
+			return -14
+			;;
+		62)
+			return -15
+			;;
+	esac
+}
+
+# Fetches the gemini response from server
+# Parameters: proto, host, port and path
+fetch() {
+	echo "$1://$2:$3/$4" | openssl s_client \
+		-connect "$2:$3" -crlf -quiet \
+		-ign_eof 2> /dev/null
+}
+
+# Restore terminal
+trap "tput rmcup && exit" EXIT SIGINT SIGHUP
+
+# Execution
+args="$@"
+
+# Default url
+[ -z $args ] && args="gemini.circumlunar.space/"
+
+# Save terminal
+tput smcup
+
+# First request
+fetch $(parseurl "$args") | parsegemini
+
+while :
+do
+	echo "Press q to quit or new url to navigate to"
+	read -r opt
+	[ $opt = "q" ] && break
+
+	# Add a separator
+	printf '\n%*s\n' $(tput cols) | tr ' ' '#'
+	fetch $(parseurl "$opt") | parsegemini
+done
