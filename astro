@@ -49,6 +49,7 @@ parseurl() {
 	port="$(echo "$hostport" | sed -e 's,^.*:,:,g' -e 's,.*:\([0-9]*\).*,\1,g' -e 's,[^0-9],,g')"
 	path="$(echo "$url" | grep / | cut -d/ -f2-)" 			# extract the path (if any)
 	
+	[ "$debug" ] && echo "Parsed URL: ${proto:-gemini} $host ${port:-1965} ${path:-index.gmi}" >&2
 	echo "${proto:-gemini}" "$host" "${port:-1965}" "${path:-index.gmi}"
 	return 0
 }
@@ -86,7 +87,8 @@ parsegemini() {
 			;;
 		31|32)
 			# Redirect
-			"$0" "$meta"
+			[ "$debug" ] && echo "Redirect to: $meta" >&2
+			fetch $(parseurl "$meta") | parsegemini
 			return 0
 			;;
 		40)
@@ -169,14 +171,14 @@ fetch $(parseurl "$args") | parsegemini
 
 while :
 do
-	[ "$debug" ] && echo "Awaiting command" >&2
+	# Add a separator
+	printf '\n%*s\n' "$(tput cols)" "#" | tr ' ' '#'
 
+	[ "$debug" ] && echo "Awaiting command" >&2
 	echo "Press q to quit or new url to navigate to"
 	read -r opt
 	[ "$debug" ] && echo "Read: $opt" >&2
 	[ "$opt" = "q" ] && break
 
-	# Add a separator
-	printf '\n%*s\n' "$(tput cols)" "#" | tr ' ' '#'
 	fetch $(parseurl "$opt") | parsegemini
 done
