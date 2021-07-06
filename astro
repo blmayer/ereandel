@@ -38,8 +38,9 @@ version() {
 # Parameters: url
 parseurl() {
 	# Credits: https://stackoverflow.com/a/6174447/7618649
-	proto="$(echo "$1" | grep :// | sed -e's,^\(.*\)://.*,\1,g')"	# extract the protocol
-	url="${1/"$proto://"/}"						# remove the protocol
+	proto="$(echo "$1" | grep // | sed -e's,^\(.*:\?//\).*,\1,g')"	# extract the protocol
+	url="${1/$proto/}"						# remove the protocol
+	proto="$(echo "$proto" | sed -e 's,:\?//,,g')"
 	user="$(echo "$url" | grep @ | cut -d@ -f1)" 			# extract the user (if any)
 	hostport="$(echo "${url/$user@/}" | cut -d/ -f1)" 		# extract the host and port
 	host="$(echo "$hostport" | sed -e 's,:.*,,g')" 			# by request host without port
