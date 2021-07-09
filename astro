@@ -56,7 +56,7 @@ parseurl() {
 
 # Parses the first line from the response
 # Spec draft is here: https://gemini.circumlunar.space/docs/specification.html
-LESS="q to quit, g to go address, r to reload and a number to follow to link"
+LESS="q: quit, g: go to link, r: reload, b: back and o: open"
 parsegemini() {
 	# First line is status and meta information
 	read -r status meta
