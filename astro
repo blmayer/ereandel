@@ -49,22 +49,14 @@ parseurl() {
 	port="$(echo "$hostport" | sed -e 's,^.*:,:,g' -e 's,.*:\([0-9]*\).*,\1,g' -e 's,[^0-9],,g')"
 	path="$(echo "$url" | grep / | cut -d/ -f2-)" 			# extract the path (if any)
 	
-	[ "$debug" ] && echo "Parsed URL: ${proto:-gemini} $host ${port:-1965} ${path:-index.gmi}" >&2
+	[ "$debug" ] && echo "Parsed URL: proto: $proto host: $host port: $port path:$path" >&2
 	echo "${proto:-gemini}" "$host" "${port:-1965}" "${path:-index.gmi}"
 	return 0
 }
 
-# Formats and prints the gemini response, reads the input from stdin
-printbody() {
-	[ "$debug" ] && echo "Response body:" >&2
-	while read -r line
-	do
-		echo "$line"
-	done
-}
-
 # Parses the first line from the response
 # Spec draft is here: https://gemini.circumlunar.space/docs/specification.html
+LESS="q to quit, g to go address, r to reload and a number to follow to link"
 parsegemini() {
 	# First line is status and meta information
 	read -r status meta
@@ -79,11 +71,6 @@ parsegemini() {
 		11)
 			echo "Sensitive input needed"
 			return 2
-			;;
-		20)
-			# Success
-			printbody
-			return 0
 			;;
 		31|32)
 			# Redirect
@@ -131,6 +118,74 @@ parsegemini() {
 			return 15
 			;;
 	esac
+
+	# Success
+	[ "$debug" ] && echo "Success, reading body"
+	[ -f "$cachedir/links.txt" ] && rm "$cachedir/links.txt"
+	i=1
+	while read -r line
+	do
+		line="$(echo "$line" | tr -d '\r')"
+		case "$line" in
+			"=>"*)
+				link="$(echo "$line" | sed -e 's/^=> *\(\S\+\)\s*.\+/\1/g')"
+				[ "$debug" ] && echo "Got link: $link"
+
+				echo "$i	$link" >> "$cachedir/links.txt"
+				i=$((i + 1))
+				echo "$line"
+				;;
+			'```'*)
+				echo ""
+				;;
+			*)
+				echo "$line"
+				;;
+		esac
+	done | less -k "$LESSKEY" -P "$LESS" +k
+	code="$?"
+
+	[ "$debug" ] && echo "pager exit code: $code"
+
+	# Choose what to do next
+
+	case "$code" in
+		0)
+			return
+			;;
+		49)
+			printf "Type url: "
+			read -r url
+			[ "$debug" ] && echo "New url: $url" >&2
+
+			prev="$proto://$host:$port/$path"
+			[ "$debug" ] && echo "prev: $prev"
+			;;
+		50)
+			[ "$debug" ] && echo "Refresh: $url" >&2
+			;;
+		51)
+			prev="$proto://$host:$port/$path"
+			[ "$debug" ] && echo "prev: $prev"
+
+			cat "$cachedir/links.txt"
+			printf "Enter link number: "
+			read -r -u 1 i
+			url="$(grep -G "^$i	" "$cachedir/links.txt" | cut -d'	' -f2)"
+			;;
+		52)
+			url="$prev"
+			;;
+	esac
+
+	# Add domain for incomplete links
+	echo "$url" | grep -q "//" || url="$host/$url"
+	read -r proto host port path << EOF
+$(parseurl "$url")
+EOF
+	[ "$debug" ] && echo "Seeking link: $url" >&2
+	fetch "$proto" "$host" "$port" "$path" | parsegemini
+
 }
 
 # Fetches the gemini response from server
@@ -145,7 +200,7 @@ fetch() {
 # Execution
 
 # Restore terminal
-trap "tput rmcup && exit" EXIT SIGINT SIGHUP
+# trap "tput rmcup && exit" EXIT SIGINT SIGHUP
 
 # Parse arguments
 args="$*"
@@ -160,25 +215,40 @@ case "$args" in
 		;;
 esac
 
+# Configuration
+[ -n "$HOME/.config/astro" ] && mkdir -p "$HOME/.config/astro"
+configfile="$HOME/.config/astro/astro.conf"
+LESSKEY="$HOME/.config/astro/less.keys"
+
+# This is the final binary form, to save space, it corresponds to:
+# g (49): go to a link, r (50): reload page and o (51): to to a URL
+[ -n "$LESSKEY" ] && echo "AE0rR2MUAG8AmDEAcgCYMgBnAJgzAGIAmDQAZQAAdgAAeEVuZA==" | \
+	base64 -d  > "$LESSKEY"
+
+[ -n "$HOME/.cache/astro" ] && mkdir -p "$HOME/.cache/astro"
+cachedir="$HOME/.cache/astro"
+
+# Configuration step
+if [ -e "$configfile" ]
+then
+	margin="$(grep margin "$configfile" | cut -d '=' -f 2,3)"
+	homepage="$(grep homepage "$configfile" | cut -d '=' -f 2,3)"
+	width="$(grep width "$configfile" | cut -d '=' -f 2)"
+fi
+
+# Setup
+curwidth="$(tput cols)"
+
 # Default url
-[ -z "$args" ] && args="gemini.circumlunar.space/"
+[ -z "$args" ] && args="${homepage-"gemini.circumlunar.space/"}"
 
 # Save terminal
-tput smcup
+# tput smcup
 
 # First request
-fetch $(parseurl "$args") | parsegemini
+read -r proto host port path << EOF
+$(parseurl "$args")
+EOF
 
-while :
-do
-	# Add a separator
-	printf '\n%*s\n' "$(tput cols)" "#" | tr ' ' '#'
+fetch "$proto" "$host" "$port" "$path" | parsegemini
 
-	[ "$debug" ] && echo "Awaiting command" >&2
-	echo "Press q to quit or new url to navigate to"
-	read -r opt
-	[ "$debug" ] && echo "Read: $opt" >&2
-	[ "$opt" = "q" ] && break
-
-	fetch $(parseurl "$opt") | parsegemini
-done
