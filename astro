@@ -59,6 +59,10 @@ parseurl() {
 # Parameters: proto, host, port and path
 # Spec draft is here: https://gemini.circumlunar.space/docs/specification.html
 fetch() {
+	# Some setup first
+	cols=$(tput cols)
+	width=$((cols - (2*margin)))
+
 	[ "$debug" ] && echo "Requesting $1://$2:$3/$4" >&2
 	echo "$1://$2:$3/$4" | openssl s_client \
 		-connect "$2:$3" -crlf -quiet \
@@ -71,11 +75,11 @@ fetch() {
 		# Validate
 		case "$status" in
 			10)
-				echo "Input needed"
+				echo "Input needed" >&2
 				return 1
 				;;
 			11)
-				echo "Sensitive input needed"
+				echo "Sensitive input needed" >&2
 				return 2
 				;;
 			31|32)
@@ -85,7 +89,7 @@ fetch() {
 				return 0
 				;;
 			40)
-				echo "Temporary failure"
+				echo "Temporary failure" >&2
 				return 3
 				;;
 			41)
@@ -101,7 +105,7 @@ fetch() {
 				return 7
 				;;
 			51)
-				echo "Page not found!"
+				echo "Page not found!" >&2
 				fetch $(parseurl "$prev")
 				;;
 			52)
@@ -111,7 +115,7 @@ fetch() {
 				return 11
 				;;
 			59)
-				echo "Bad request"
+				echo "Bad request" >&2
 				return 12
 				;;
 			60)
@@ -145,10 +149,23 @@ fetch() {
 					line="=> $line"
 					;;
 				'```'*)
+					pre=$((1 - pre))
 					line="" ;;
 				*) ;;
 			esac
-			printf "%*s%s\n" "$margin" "" "$line"
+
+			# Add margins and fold
+			if [ "$pre" ]
+			then
+				printf "%*s%s\n" "$margin" "" "$line"
+			else
+				echo "$line" | fmt -w $width | {
+					while read -r txt
+					do
+						printf "%*s%s\n" "$margin" "" "$txt"
+					done
+				}
+			fi
 		done | less -k "$LESSKEY" +k
 		code="$?"
 
@@ -156,7 +173,7 @@ fetch() {
 		[ "$debug" ] && echo "pager exit code: $code"
 		case "$code" in
 			0)
-				return
+				exit
 				;;
 			49)
 				# Open url
@@ -169,6 +186,7 @@ fetch() {
 				;;
 			50)
 				# Refresh
+				url="$1://$2:$3/$4"
 				[ "$debug" ] && echo "Refresh: $url" >&2
 				;;
 			51)
@@ -176,6 +194,7 @@ fetch() {
 				prev="$1://$2:$3/$4"
 				[ "$debug" ] && echo "prev: $prev"
 
+				clear
 				cat "$cachedir/links.txt"
 				printf "Enter link number: "
 				read -r -u 1 i
@@ -196,6 +215,9 @@ fetch() {
 
 # Execution
 export LESS='-P q\: quit, g\: go to link, r\: reload, b\: back, o\: open and H\: go to homepage'
+
+# Save terminal
+tput smcup
 
 # Restore terminal
 trap "tput rmcup && exit" EXIT SIGINT SIGHUP
@@ -232,23 +254,14 @@ if [ -e "$configfile" ]
 then
 	margin="$(grep margin "$configfile" | cut -d '=' -f 2,3)"
 	homepage="$(grep homepage "$configfile" | cut -d '=' -f 2,3)"
-	width="$(grep width "$configfile" | cut -d '=' -f 2)"
 fi
 
 # Default values
 [ -z "$margin" ] && margin=8
 [ -z "$homepage" ] && homepage="gemini.circumlunar.space/"
 
-# Setup
-curwidth="$(tput cols)"
-
-# Save terminal
-tput smcup
-
 [ -e "$debug" ] && {
 	echo "Starting with ${args:-$homepage}"
-	echo " - width:	$width"
-	echo " - curwidth:	$curwidth"
 	echo " - margin:	$margin"
 }
 
