@@ -134,23 +134,26 @@ fetch() {
 			line="$(echo "$line" | tr -d '\r')"
 			case "$line" in
 				"=>"*)
-					link="$(echo "$line" | sed -e 's/^=> *\(\S\+\)\s*.\+/\1/g')"
+					link="$(echo "$line" | sed -e 's/^=> *\(\S\+\)\(\s*.\+\)/\1\2/g')"
 					[ "$debug" ] && echo "Got link: $link"
 
 					echo "$i	$link" >> "$cachedir/links.txt"
 					i=$((i + 1))
+
+					line="$(echo $link | cut -d' ' -f2-)"
+					[ -z "$line" ] && line="$(echo $link | cut -d' ' -f1)"
+					line="=> $line"
 					;;
 				'```'*)
 					line="" ;;
 				*) ;;
 			esac
-			echo "$line"
-		done | less -k "$LESSKEY" -P "$LESS" +k
+			printf "%*s%s\n" "$margin" "" "$line"
+		done | less -k "$LESSKEY" +k
 		code="$?"
 
-		[ "$debug" ] && echo "pager exit code: $code"
-
 		# Choose what to do next
+		[ "$debug" ] && echo "pager exit code: $code"
 		case "$code" in
 			0)
 				return
@@ -192,10 +195,10 @@ fetch() {
 }
 
 # Execution
-LESS="q: quit, g: go to link, r: reload, b: back and o: open"
+export LESS='-P q\: quit, g\: go to link, r\: reload, b\: back, o\: open and H\: go to homepage'
 
 # Restore terminal
-# trap "tput rmcup && exit" EXIT SIGINT SIGHUP
+trap "tput rmcup && exit" EXIT SIGINT SIGHUP
 
 # Parse arguments
 args="$*"
@@ -232,15 +235,23 @@ then
 	width="$(grep width "$configfile" | cut -d '=' -f 2)"
 fi
 
+# Default values
+[ -z "$margin" ] && margin=8
+[ -z "$homepage" ] && homepage="gemini.circumlunar.space/"
+
 # Setup
 curwidth="$(tput cols)"
-
-# Default url
-[ -z "$args" ] && args="${homepage-"gemini.circumlunar.space/"}"
 
 # Save terminal
 tput smcup
 
+[ -e "$debug" ] && {
+	echo "Starting with ${args:-$homepage}"
+	echo " - width:	$width"
+	echo " - curwidth:	$curwidth"
+	echo " - margin:	$margin"
+}
+
 # First request
-fetch $(parseurl "$args")
+fetch $(parseurl "${args:-$homepage}")
 
