@@ -107,6 +107,7 @@ fetch() {
 			51)
 				echo "Page not found!" >&2
 				fetch $(parseurl "$prev")
+				return 0
 				;;
 			52)
 				return 10
@@ -172,9 +173,7 @@ fetch() {
 		# Choose what to do next
 		[ "$debug" ] && echo "pager exit code: $code"
 		case "$code" in
-			0)
-				exit
-				;;
+			0) exit 0 ;;
 			49)
 				# Open url
 				printf "Type url: "
@@ -182,13 +181,8 @@ fetch() {
 				[ "$debug" ] && echo "New url: $url" >&2
 
 				prev="$1://$2:$3/$4"
-				[ "$debug" ] && echo "prev: $prev"
 				;;
-			50)
-				# Refresh
-				url="$1://$2:$3/$4"
-				[ "$debug" ] && echo "Refresh: $url" >&2
-				;;
+			50) url="$1://$2:$3/$4" ;;
 			51)
 				# Folow link
 				prev="$1://$2:$3/$4"
@@ -200,10 +194,8 @@ fetch() {
 				read -r -u 1 i
 				url="$(grep -G "^$i	" "$cachedir/links.txt" | cut -d'	' -f2)"
 				;;
-			52)
-				# Back
-				url="$prev"
-				;;
+			52) url="$prev" ;;
+			53) url="$(printf "%s://%s:%s/%s" $(parseurl "$homepage"))" ;;
 		esac
 
 		# Add domain for incomplete links
@@ -245,8 +237,12 @@ cachedir="$HOME/.cache/astro"
 LESSKEY="$HOME/.config/astro/less.keys"
 
 # This is the final binary form, to save space, it corresponds to:
-# g (49): go to a link, r (50): reload page and o (51): to to a URL
-[ -n "$LESSKEY" ] && echo "AE0rR2MUAG8AmDEAcgCYMgBnAJgzAGIAmDQAZQAAdgAAeEVuZA==" | \
+# o (49): to to a URL
+# r (50): reload page
+# g (51): go to a link
+# b (52): go back
+# H (53): go to homepage
+[ -n "$LESSKEY" ] && echo "AE0rR2MZAG8AmDEAcgCYMgBnAJgzAGIAmDQASACYNQBlAAB2AAB4RW5k" | \
 	base64 -d  > "$LESSKEY"
 
 # Configuration step
