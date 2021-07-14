@@ -23,3 +23,36 @@ you can omit the protocol and port:
 no arguments takes you to *gemini.circumlunar.space*:
 
 `astro`
+
+
+### Key bindings
+
+- `b` to go back one page
+- `o` to open a new URL, you'll be prompted to type it
+- `r` to reload the page
+- `g` to follow a link in the current page, a link will be displayed, and
+- `q` to quit
+
+More coming.
+
+
+## Meta
+
+This software is a work in progress and may not work as it is intended to.
+
+
+### Further works
+
+- Bookmarks
+- Go to home keybinding
+- Better history
+- Colors
+- Formating
+- Opening files
+- Support input
+
+
+### Inspired by
+
+- [gmi](https://sr.ht/~chambln/gmi/)
+- [bollux](https://sr.ht/~acdw/bollux/)
