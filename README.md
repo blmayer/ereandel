@@ -5,7 +5,9 @@
 
 ## Installing
 
-Move the file *astro* to a folder in your PATH variable.
+Move the file *astro* to a folder in your PATH variable, or
+run `make`, by default it will be installed into *~/.local/bin*.
+Use *PREFIX* to override the install location.
 
 
 ## Using
