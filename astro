@@ -49,7 +49,7 @@ parseurl() {
 	port="$(echo "$hostport" | sed -e 's,^.*:,:,g' -e 's,.*:\([0-9]*\).*,\1,g' -e 's,[^0-9],,g')"
 	path="$(echo "$url" | grep / | cut -d/ -f2-)" 			# extract the path (if any)
 	
-	[ "$debug" ] && echo "Parsed URL: proto: $proto host: $host port: $port path:$path" >&2
+	[ "$debug" ] && echo "Parsed URL: proto: $proto host: $host port: $port path:$path" >&2 && sleep 2
 	echo "${proto:-gemini}" "$host" "${port:-1965}" "${path:-index.gmi}"
 	return 0
 }
@@ -70,7 +70,7 @@ fetch() {
 
 		# First line is status and meta information
 		read -r status meta
-		[ "$debug" ] && echo "Response header: $status $meta" >&2
+		[ "$debug" ] && echo "Response header: $status $meta" >&2 && sleep 2
 
 		# Validate
 		case "$status" in
@@ -139,9 +139,7 @@ fetch() {
 			line="$(echo "$line" | tr -d '\r')"
 			case "$line" in
 				"=>"*)
-					link="$(echo "$line" | sed -e 's/^=> *\(\S\+\)\(\s*.\+\)/\1\2/g')"
-					[ "$debug" ] && echo "Got link: $link"
-
+					link="$(echo "$line" | sed -e 's/^=> *\(\S\+\)\(\s*.*\)/\1\t\2/g')"
 					echo "$i	$link" >> "$cachedir/links.txt"
 					i=$((i + 1))
 
@@ -152,6 +150,7 @@ fetch() {
 				'```'*)
 					pre=$((1 - pre))
 					line="" ;;
+				'* '*) line=" • ${line:2}";;
 				*) ;;
 			esac
 
@@ -161,7 +160,7 @@ fetch() {
 				printf "%*s%s\n" "$margin" "" "$line"
 			else
 				echo "$line" | fmt -w $width | {
-					while read -r txt
+					while IFS='' read -r txt
 					do
 						printf "%*s%s\n" "$margin" "" "$txt"
 					done
