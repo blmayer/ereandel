@@ -32,6 +32,7 @@ no arguments takes you to *gemini.circumlunar.space*:
 - `r` to reload the page
 - `H` to go to the home page
 - `g` to follow a link in the current page, a link will be displayed, and
+- `s` to save the page to a file
 - `q` to quit
 
 More coming.
