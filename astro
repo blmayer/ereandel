@@ -136,7 +136,7 @@ fetch() {
 		[ -f "$cachedir/links.txt" ] && rm "$cachedir/links.txt"
 
 		# Set charset
-		charset="$(echo "$meta" | sed 's/.*charset=\([^;]\+\).*/\1/Ig')"	
+		charset="$(echo "$meta" | grep -i "charset=" | sed 's/.*charset=\([^;]\+\).*/\1/Ig')"
 		case "$charset" in
 			"iso-8859-1" | "ISO-8859-1") charset="iso8859" ;;
 			"utf-8" | "UTF-8" | "") charset="utf8" ;;
@@ -221,7 +221,7 @@ fetch() {
 }
 
 # Execution
-export LESS='-P q\: quit, g\: go to link, r\: reload, b\: back, o\: open and H\: go to homepage'
+export LESS='-P q\: quit, g\: go to link, r\: reload, b\: back, o\: open, s\: save and H\: go to homepage'
 
 # Save terminal
 tput smcup
