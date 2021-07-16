@@ -70,7 +70,8 @@ fetch() {
 
 		# First line is status and meta information
 		read -r status meta
-		[ "$debug" ] && echo "Response header: $status $meta" >&2 && sleep 2
+		meta="$(echo "$meta" | tr -d '\r')"
+		[ "$debug" ] && echo "Response header: $status $meta" >&2 && sleep 1
 
 		# Validate
 		case "$status" in
@@ -133,6 +134,16 @@ fetch() {
 		# Success
 		[ "$debug" ] && echo "Success, reading body"
 		[ -f "$cachedir/links.txt" ] && rm "$cachedir/links.txt"
+
+		# Set charset
+		charset="$(echo "$meta" | sed 's/.*charset=\([^;]\+\).*/\1/Ig')"	
+		case "$charset" in
+			"iso-8859-1" | "ISO-8859-1") charset="iso8859" ;;
+			"utf-8" | "UTF-8" | "") charset="utf8" ;;
+			"us-ascii" | "US-ASCII") charset="ascii" ;;
+		esac
+		[ "$debug" ] && echo "Charset: $charset" >&2 && sleep 1
+
 		i=1
 		while read -r line
 		do
@@ -166,7 +177,7 @@ fetch() {
 					done
 				}
 			fi
-		done | less -k "$LESSKEY" +k
+		done | LESSCHARSET="$charset" less -k "$LESSKEY" +k
 		code="$?"
 
 		# Choose what to do next
@@ -204,7 +215,7 @@ fetch() {
 			url="$2:$3/$url"
 		}
 
-		[ "$debug" ] && echo "Seeking link: $url" >&2 && sleep 2
+		[ "$debug" ] && echo "Seeking link: $url" >&2 && sleep 1
 		fetch $(parseurl "$url")
 	}
 }
