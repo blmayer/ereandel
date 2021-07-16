@@ -192,14 +192,19 @@ fetch() {
 				printf "Enter link number: "
 				read -r -u 1 i
 				url="$(grep -G "^$i	" "$cachedir/links.txt" | cut -d'	' -f2)"
+				[ "$debug" ] && echo "Link is: $url"
 				;;
 			52) url="$prev" ;;
 			53) url="$(printf "%s://%s:%s/%s" $(parseurl "$homepage"))" ;;
 		esac
 
-		# Add domain for incomplete links
-		echo "$url" | grep -q "//" || url="$2/$url"
-		[ "$debug" ] && echo "Seeking link: $url" >&2
+		# Relative links
+		echo "$url" | grep -q -E '[^/]+/[^/]+' || {
+			echo "$4" | grep -q "/" && url="${4%\/*}/$url"
+			url="$2:$3/$url"
+		}
+
+		[ "$debug" ] && echo "Seeking link: $url" >&2 && sleep 2
 		fetch $(parseurl "$url")
 	}
 }
