@@ -148,36 +148,40 @@ fetch() {
 		while read -r line
 		do
 			line="$(echo "$line" | tr -d '\r')"
-			case "$line" in
-				"=>"*)
-					link="$(echo "$line" | sed -e 's/^=> *\(\S\+\)\(\s*.*\)/\1\t\2/g')"
-					echo "$i	$link" >> "$cachedir/links.txt"
-					i=$((i + 1))
-
-					line="$(echo $link | cut -d' ' -f2-)"
-					[ -z "$line" ] && line="$(echo $link | cut -d' ' -f1)"
-					line="=> $line"
-					;;
-				'```'*)
-					pre=$((1 - pre))
-					line="" ;;
-				'* '*) line=" • ${line:2}";;
-				*) ;;
-			esac
+			echo "$line" | grep -q '```' && pre=$((1 - pre)) && line=""
 
 			# Add margins and fold
-			if [ "$pre" ]
+			if [ "$pre" = 1 ]
 			then
 				printf "%*s%s\n" "$margin" "" "$line"
 			else
-				echo "$line" | fmt -w $width | {
+				case "$line" in
+					"### "*) sty="\e[35;1m" && line="${line:4}" ;;
+					"## "*) sty="\e[35;4m" && line="${line:3}" ;;
+					"# "*) sty="\e[35;4;1m" && line="${line:2}" ;;
+					"> "*) sty="  \e[2;3m" && line="${line:2}" ;;
+					"=>"*)
+						link="$(echo "$line" | sed -e 's/^=> *\(\S\+\)\(\s*.*\)/\1\t\2/g')"
+						echo "$i	$link" >> "$cachedir/links.txt"
+						i=$((i + 1))
+
+						line="$(echo $link | cut -d' ' -f2-)"
+						[ -z "$line" ] && line="$(echo $link | cut -d' ' -f1)"
+						sty="\e[36;3m"
+						line="\e[35m=>\e[36;3m $line"
+						;;
+					'* '*) sty="" && line=" \e[35;1m•\e[0m ${line:2}";;
+					*) sty="";;
+				esac
+				echo "$line" | fold -w $width -s | {
 					while IFS='' read -r txt
 					do
-						printf "%*s%s\n" "$margin" "" "$txt"
+						printf "%*s" "$margin" ""
+						echo -e "$sty$txt"
 					done
 				}
 			fi
-		done | LESSCHARSET="$charset" less -k "$LESSKEY" +k
+		done | LESSCHARSET="$charset" less -k "$LESSKEY" +k -R
 		code="$?"
 
 		# Choose what to do next
