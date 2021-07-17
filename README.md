@@ -47,8 +47,6 @@ This software is a work in progress and may not work as it is intended to.
 
 - Bookmarks
 - Better history
-- Colors
-- Formating
 - Opening files
 - Support input
 
