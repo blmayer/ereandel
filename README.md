@@ -2,6 +2,8 @@
 
 > A Gemini web browser using shell script
 
+![print](https://github.com/blmayer/astro/blob/main/astro.png?raw=true)
+
 
 ## Installing
 
