@@ -117,7 +117,7 @@ fetch() {
 				return 11
 				;;
 			59)
-				echo "Bad request" >&2
+				echo "Bad request: $meta" >&2
 				return 12
 				;;
 			60)
@@ -145,7 +145,7 @@ fetch() {
 		[ "$debug" ] && echo "Charset: $charset" >&2 && sleep 1
 
 		i=1
-		while read -r line
+		while IFS='' read -r line
 		do
 			line="$(echo "$line" | tr -d '\r')"
 			echo "$line" | grep -q '```' && pre=$((1 - pre)) && line=""
