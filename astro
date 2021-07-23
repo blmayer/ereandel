@@ -44,11 +44,12 @@ parseurl() {
 	
 	if [ "$proto" ]
 	then 
-		url="$(echo "$url" | sed -e "s/$proto//g")"			# remove the protocol
+		url="$(echo "$url" | sed -e "s@$proto@@g")"			# remove the protocol
 	else
 		url="$1"
 	fi
 	[ "$debug" ] && echo "url: $url" >&2 && sleep 2
+	
 	proto="$(echo "$proto" | sed -e 's,:\?//,,g')"
 	user="$(echo "$url" | grep @ | cut -d@ -f1)" 			# extract the user (if any)
 	hostport="$(echo "$url" | sed -e "s/$user@//g" | cut -d/ -f1)" 	# extract the host and port
