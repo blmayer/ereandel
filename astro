@@ -46,7 +46,7 @@ parseurl() {
 	then 
 		url="$(echo "$url" | sed -e "s/$proto//g")"			# remove the protocol
 	else
-		url=" $1"
+		url="$1"
 	fi
 	[ "$debug" ] && echo "url: $url" >&2 && sleep 2
 	proto="$(echo "$proto" | sed -e 's,:\?//,,g')"
@@ -200,7 +200,7 @@ fetch() {
 			49)
 				# Open url
 				printf "Type url: "
-				read -r -u 1 url
+				read -r url <&1
 				[ "$debug" ] && echo "New url: $url" >&2
 
 				prev="$1://$2:$3/$4"
@@ -214,7 +214,7 @@ fetch() {
 				clear
 				cat "$cachedir/links.txt"
 				printf "Enter link number: "
-				read -r -u 1 i
+				read -r i <&1
 				url="$(grep -G "^$i	" "$cachedir/links.txt" | cut -d'	' -f2)"
 				[ "$debug" ] && echo "Link is: $url"
 				;;
@@ -237,10 +237,10 @@ fetch() {
 export LESS='-P q\: quit, g\: go to link, r\: reload, b\: back, o\: open, s\: save and H\: go to homepage'
 
 # Save terminal
-tput smcup
+# tput smcup
 
 # Restore terminal
-trap "tput rmcup && exit" EXIT SIGINT SIGHUP
+# trap "tput rmcup && exit" EXIT SIGINT SIGHUP
 
 # Parse arguments
 args="$*"
