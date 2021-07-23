@@ -39,12 +39,11 @@ version() {
 parseurl() {
 	# Credits: https://stackoverflow.com/a/6174447/7618649
 	[ "$debug" ] && echo "Parsing: $1" >&2 && sleep 2
-	proto="$(echo "$1" | grep // | sed -e 's,^\(.*:\?//\).*,\1,g')"	# extract the protocol
-	[ "$debug" ] && echo "Proto: $proto" >&2 && sleep 2
+	proto="$(echo "$1" | grep :// | sed -e 's,^\(.*://\).*,\1,g')"	# extract the protocol
 	
 	if [ "$proto" ]
 	then 
-		url="$(echo "$url" | sed -e "s@$proto@@g")"			# remove the protocol
+		url="$(echo "$1" | sed -e "s@$proto@@g")"			# remove the protocol
 	else
 		url="$1"
 	fi
@@ -59,8 +58,8 @@ parseurl() {
 	port="$(echo "$hostport" | sed -e 's,^.*:,:,g' -e 's,.*:\([0-9]*\).*,\1,g' -e 's,[^0-9],,g')"
 	path="$(echo "$url" | grep / | cut -d/ -f2-)" 			# extract the path (if any)
 	
-	[ "$debug" ] && echo "Parsed URL: proto: $proto host: $host port: $port path:$path" >&2 && sleep 2
-	echo "${proto:-gemini}" "$host" "${port:-1965}" "${path:-index.gmi}"
+	[ "$debug" ] && echo "Parsed URL: proto: $proto host: $host port: $port path: $path" >&2 && sleep 2
+	echo "${proto:-gemini}" "$host" "${port:-1965}" "${path#/}"
 	return 0
 }
 
@@ -73,8 +72,8 @@ fetch() {
 	cols=$(tput cols)
 	width=$((cols - (2*margin)))
 
-	[ "$debug" ] && echo "Requesting $1://$2:$3/$4" >&2
-	echo "$1://$2:$3/$4" | openssl s_client \
+	[ "$debug" ] && echo "Requesting $1://$2:$3/$4$5" >&2
+	echo "$1://$2:$3/$4$5" | openssl s_client \
 		-connect "$2:$3" -crlf -quiet \
 		-ign_eof 2> /dev/null | {
 
@@ -86,11 +85,14 @@ fetch() {
 		# Validate
 		case "$status" in
 			10)
-				echo "Input needed" >&2
+				echo "Input needed: $meta" >&2
+				echo "Please provide the input:" >&2
+				read -r input <&1
+				fetch "$1" "$2" "$3" "$4" "?$input"
 				return 1
 				;;
 			11)
-				echo "Sensitive input needed" >&2
+				echo "Sensitive input needed: $meta" >&2
 				return 2
 				;;
 			31|32)
@@ -195,7 +197,7 @@ fetch() {
 		code="$?"
 
 		# Choose what to do next
-		[ "$debug" ] && echo "pager exit code: $code"
+		[ "$debug" ] && echo "pager exit code: $code" >&2
 		case "$code" in
 			0) exit 0 ;;
 			49)
@@ -210,27 +212,29 @@ fetch() {
 			51)
 				# Folow link
 				prev="$1://$2:$3/$4"
-				[ "$debug" ] && echo "prev: $prev"
+				[ "$debug" ] && echo "prev: $prev" >&2
 
 				clear
 				cat "$cachedir/links.txt"
 				printf "Enter link number: "
 				read -r i <&1
 				url="$(grep -G "^$i	" "$cachedir/links.txt" | cut -d'	' -f2)"
-				[ "$debug" ] && echo "Link is: $url"
+				[ "$debug" ] && echo "Link is: $url" >&2
 				;;
 			52) url="$prev" ;;
 			53) url="$(printf "%s://%s:%s/%s" $(parseurl "$homepage"))" ;;
 		esac
 
-		# Relative links
-		echo "$url" | grep -q -E '[^/]+/[^/]+' || {
-			echo "$4" | grep -q "/" && url="${4%\/*}/$url"
-			url="$2:$3/$url"
-		}
+		newurl="$(parseurl "$url")"
+		proto="$(echo "$newurl" | cut -d' ' -f1)"
+		host="$(echo "$newurl" | cut -d' ' -f2)"
+		port="$(echo "$newurl" | cut -d' ' -f3)"
+		path="$(echo "$newurl" | cut -d' ' -f4)"
 
-		[ "$debug" ] && echo "Seeking link: $url" >&2 && sleep 1
-		fetch $(parseurl "$url")
+		[ "$host" ] || host="$2"
+		[ "$debug" ] && echo "Seeking link: gemini://$host:$port/$path" >&2 && sleep 1
+		
+		fetch "gemini" "$host" "$port" "$path"
 	}
 }
 
@@ -238,10 +242,10 @@ fetch() {
 export LESS='-P q\: quit, g\: go to link, r\: reload, b\: back, o\: open, s\: save and H\: go to homepage'
 
 # Save terminal
-# tput smcup
+tput smcup
 
 # Restore terminal
-# trap "tput rmcup && exit" EXIT SIGINT SIGHUP
+trap "tput rmcup && exit" EXIT SIGINT SIGHUP
 
 # Parse arguments
 args="$*"
