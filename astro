@@ -71,6 +71,7 @@ fetch() {
 	# Some setup first
 	cols=$(tput cols)
 	width=$((cols - (2*margin)))
+	[ "$debug" ] && echo "Text width: $width" >&2
 
 	[ "$debug" ] && echo "Requesting $1://$2:$3/$4$5" >&2
 	echo "$1://$2:$3/$4$5" | openssl s_client \
@@ -189,7 +190,7 @@ fetch() {
 					while IFS='' read -r txt
 					do
 						printf "%*s" "$margin" ""
-						echo "$sty$txt"
+						printf "$sty$txt\n"
 					done
 				}
 			fi
@@ -231,6 +232,7 @@ fetch() {
 		port="$(echo "$newurl" | cut -d' ' -f3)"
 		path="$(echo "$newurl" | cut -d' ' -f4)"
 
+		[ "$path" ] || path="$host"; host="$2"
 		[ "$host" ] || host="$2"
 		[ "$debug" ] && echo "Seeking link: gemini://$host:$port/$path" >&2 && sleep 1
 		
