@@ -10,6 +10,17 @@ usage() {
 	echo "  --help	show this help"
 	echo "  --version	show version info"
 	echo ""
+	echo "Commands available inside the browser:"
+	echo "  q	quit"
+	echo "  g	go to a link"
+	echo "  r	reload current page"
+	echo "  b	go back one page"
+	echo "  o	open an address"
+	echo "  s	save current page"
+	echo "  H	go to homepage"
+	echo "  m	add bookmark"
+	echo "  M	go to a bookmark"
+	echo ""
 	echo "Examples:"
 	echo "  astro		Start browsing the default webpage"
 	echo "  astro url	Start browsing url"
@@ -173,12 +184,11 @@ fetch() {
 					"# "*) sty="\e[35;4;1m" && line="$(echo "$line" | cut -c 3-)" ;;
 					"> "*) sty="  \e[2;3m" && line="$(echo "$line" | cut -c 3-)" ;;
 					"=>"*)
-						link="$(echo "$line" | sed -e 's/^=> *\(\S\+\)\(\s*.*\)/\1\t\2/g')"
-						echo "$i	$link" >> "$cachedir/links.txt"
-						i=$((i + 1))
+						link="$(echo "$line" | sed -e 's/^=> *\(\S\+\)\(\s*.*\)/\1 \2/g')"
+						echo "$link" >> "$cachedir/links.txt"
 
 						line="$(echo $link | cut -d' ' -f2-)"
-						[ -z "$line" ] && line="$(echo $link | cut -d' ' -f1)"
+						[ -z "$line" ] && line="$link"
 						sty="\e[36;3m"
 						line="\e[35m=>\e[36;3m $line"
 						;;
@@ -205,8 +215,8 @@ fetch() {
 				printf "Type url: "
 				read -r url <&1
 				[ "$debug" ] && echo "New url: $url" >&2
-
 				prev="$1://$2:$3/$4"
+				set --
 				;;
 			50) url="$1://$2:$3/$4" ;;
 			51)
@@ -215,13 +225,28 @@ fetch() {
 				[ "$debug" ] && echo "prev: $prev" >&2
 
 				clear
-				cat "$cachedir/links.txt"
+				cat -n "$cachedir/links.txt"
 				printf "Enter link number: "
 				read -r i <&1
-				url="$(grep -G "^$i	" "$cachedir/links.txt" | cut -d'	' -f2)"
+				url="$(sed "${i}q;d" "$cachedir/links.txt" | cut -d' ' -f1)"
 				;;
 			52) url="$prev" ;;
 			53) url="$homepage"; shift $# ;;
+			54) 
+				echo "Enter description: (optional)"
+				read -r desc <&1
+				url="$1://$2:$3/$4"
+				echo "$url $desc" >> "$cachedir/bookmarks"
+				;;
+			55)
+				prev="$1://$2:$3/$4"
+				[ "$debug" ] && echo "prev: $prev" >&2
+
+				clear
+				cat -n "$cachedir/bookmarks"
+				printf "Enter link number: "
+				read -r i <&1
+				url="$(sed "${i}q;d" "$cachedir/bookmarks" | cut -d' ' -f1)"
 		esac
 
 		read proto host port path << EOF
@@ -232,13 +257,13 @@ EOF
 }
 
 # Execution
-export LESS='-P q\: quit, g\: go to link, r\: reload, b\: back, o\: open, s\: save and H\: go to homepage'
+export LESS='-P Keys\: qgrbosHmM, to see a description run astro -h'
 
 # Save terminal
-# tput smcup
+tput smcup
 
 # Restore terminal
-# trap "tput rmcup && exit" EXIT SIGINT SIGHUP
+trap "tput rmcup && exit" EXIT SIGINT SIGHUP
 
 # Parse arguments
 args="$*"
@@ -268,7 +293,9 @@ LESSKEY="$HOME/.config/astro/less.keys"
 # g (51): go to a link
 # b (52): go back
 # H (53): go to homepage
-[ -n "$LESSKEY" ] && echo "AE0rR2MZAG8AmDEAcgCYMgBnAJgzAGIAmDQASACYNQBlAAB2AAB4RW5k" | \
+# m (54): add page to bookmarks
+# M (55): go to a bookmark
+[ -n "$LESSKEY" ] && echo "AE0rR2MjAG8AmDEAcgCYMgBnAJgzAGIAmDQASACYNQBtAJg2AE0AmDcAZQAAdgAAeEVuZA==" | \
 	base64 -d  > "$LESSKEY"
 
 # Configuration step
