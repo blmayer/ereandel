@@ -1,0 +1,9 @@
+#command
+o quit 1
+r quit 2
+g quit 3
+b quit 4
+H quit 5
+m quit 6
+M quit 7
+
