@@ -35,6 +35,8 @@ no arguments takes you to *gemini.circumlunar.space*:
 - `H` to go to the home page
 - `g` to follow a link in the current page, a link will be displayed, and
 - `s` to save the page to a file
+- `m` to add the current page to bookmarks
+- `M` to go to a bookmark
 - `q` to quit
 
 More coming.
@@ -47,7 +49,6 @@ This software is a work in progress and may not work as it is intended to.
 
 ### Further works
 
-- Bookmarks
 - Better history
 - Opening files
 - Support input
@@ -57,3 +58,4 @@ This software is a work in progress and may not work as it is intended to.
 
 - [gmi](https://sr.ht/~chambln/gmi/)
 - [bollux](https://sr.ht/~acdw/bollux/)
+
