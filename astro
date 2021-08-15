@@ -263,7 +263,7 @@ export LESS='-P Keys\: qgrbosHmM, to see a description run astro -h'
 tput smcup
 
 # Restore terminal
-trap "tput rmcup && exit" EXIT SIGINT SIGHUP
+trap "tput rmcup && exit" EXIT INT HUP
 
 # Parse arguments
 args="$*"
