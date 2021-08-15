@@ -259,12 +259,6 @@ EOF
 # Execution
 export LESS='-P Keys\: qgrbosHmM, to see a description run astro -h'
 
-# Save terminal
-tput smcup
-
-# Restore terminal
-trap "tput rmcup && exit" EXIT SIGINT SIGHUP
-
 # Parse arguments
 args="$*"
 case "$args" in
@@ -277,6 +271,12 @@ case "$args" in
 		exit
 		;;
 esac
+
+# Save terminal
+tput smcup
+
+# Restore terminal
+trap "tput rmcup && exit" EXIT SIGINT SIGHUP
 
 # Configuration
 [ -n "$HOME/.config/astro" ] && mkdir -p "$HOME/.config/astro"
