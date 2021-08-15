@@ -49,7 +49,7 @@ version() {
 # Parameters: url
 parseurl() {
 	[ "$debug" ] && echo "Parsing: $1" >&2 && sleep 2
-	IFS='|' read proto hostport path rest << EOF
+	IFS='|' read -r proto hostport path rest << EOF
 $(echo "$1" | sed -E 's@^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\?([^#]*))?(#(.*))?@\2\|\4\|\5\|\7@g')
 EOF
 
@@ -63,7 +63,7 @@ EOF
 		path=
 	fi
 
-	IFS=':' read host port << EOF
+	IFS=':' read -r host port << EOF
 $hostport
 EOF
 
@@ -249,7 +249,7 @@ fetch() {
 				url="$(sed "${i}q;d" "$cachedir/bookmarks" | cut -d' ' -f1)"
 		esac
 
-		read proto host port path << EOF
+		read -r proto host port path << EOF
 $(host="$2" parseurl "$url")
 EOF
 		fetch "$proto" "$host" "$port" "$path"
