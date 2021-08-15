@@ -279,10 +279,10 @@ case "$args" in
 esac
 
 # Configuration
-[ -n "$HOME/.config/astro" ] && mkdir -p "$HOME/.config/astro"
+mkdir -p "$HOME/.config/astro"
 configfile="$HOME/.config/astro/astro.conf"
 
-[ -n "$HOME/.cache/astro" ] && mkdir -p "$HOME/.cache/astro"
+mkdir -p "$HOME/.cache/astro"
 cachedir="$HOME/.cache/astro"
 
 LESSKEY="$HOME/.config/astro/less.keys"
