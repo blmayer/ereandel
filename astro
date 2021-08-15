@@ -48,6 +48,7 @@ version() {
 # Returns the complete url scheme with gemini defaults
 # Parameters: url
 parseurl() {
+	# shellcheck disable=SC2154
 	[ "$debug" ] && echo "Parsing: $1" >&2 && sleep 2
 	IFS='|' read -r proto hostport path rest << EOF
 $(echo "$1" | sed -E 's@^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\?([^#]*))?(#(.*))?@\2\|\4\|\5\|\7@g')
@@ -109,6 +110,7 @@ fetch() {
 			31|32)
 				# Redirect
 				[ "$debug" ] && echo "Redirect to: $meta" >&2
+				# shellcheck disable=SC2046
 				fetch $(parseurl "$meta")
 				return 0
 				;;
@@ -130,6 +132,7 @@ fetch() {
 				;;
 			51)
 				echo "Page not found!" >&2
+				# shellcheck disable=SC2046
 				fetch $(parseurl "$prev")
 				return 0
 				;;
@@ -171,6 +174,7 @@ fetch() {
 		while IFS='' read -r line
 		do
 			line="$(echo "$line" | tr -d '\r')"
+			# shellcheck disable=SC2016
 			echo "$line" | grep -q '```' && pre=$((1 - pre)) && line=""
 
 			# Add margins and fold
@@ -187,6 +191,7 @@ fetch() {
 						link="$(echo "$line" | sed -e 's/^=> *\(\S\+\)\(\s*.*\)/\1 \2/g')"
 						echo "$link" >> "$cachedir/links.txt"
 
+						# shellcheck disable=SC2086
 						line="$(echo $link | cut -d' ' -f2-)"
 						[ -z "$line" ] && line="$link"
 						sty='\e[36;3m'
@@ -199,6 +204,7 @@ fetch() {
 					while IFS='' read -r txt
 					do
 						printf "%*s" "$margin" ""
+						# shellcheck disable=SC2059
 						printf "$sty$txt\\n"
 					done
 				}
@@ -315,4 +321,5 @@ fi
 }
 
 # First request
+# shellcheck disable=SC2046
 fetch $(parseurl "${args:-$homepage}")
