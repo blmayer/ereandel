@@ -48,8 +48,9 @@ version() {
 # Returns the complete url scheme with gemini defaults
 # Parameters: url
 parseurl() {
+	# shellcheck disable=SC2154
 	[ "$debug" ] && echo "Parsing: $1" >&2 && sleep 2
-	IFS='|' read proto hostport path rest << EOF
+	IFS='|' read -r proto hostport path rest << EOF
 $(echo "$1" | sed -E 's@^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\?([^#]*))?(#(.*))?@\2\|\4\|\5\|\7@g')
 EOF
 
@@ -63,7 +64,7 @@ EOF
 		path=
 	fi
 
-	IFS=':' read host port << EOF
+	IFS=':' read -r host port << EOF
 $hostport
 EOF
 
@@ -109,6 +110,7 @@ fetch() {
 			31|32)
 				# Redirect
 				[ "$debug" ] && echo "Redirect to: $meta" >&2
+				# shellcheck disable=SC2046
 				fetch $(parseurl "$meta")
 				return 0
 				;;
@@ -130,6 +132,7 @@ fetch() {
 				;;
 			51)
 				echo "Page not found!" >&2
+				# shellcheck disable=SC2046
 				fetch $(parseurl "$prev")
 				return 0
 				;;
@@ -171,35 +174,38 @@ fetch() {
 		while IFS='' read -r line
 		do
 			line="$(echo "$line" | tr -d '\r')"
+			# shellcheck disable=SC2016
 			echo "$line" | grep -q '```' && pre=$((1 - pre)) && line=""
 
 			# Add margins and fold
 			if [ "$pre" = 1 ]
 			then
-				printf "%*s%s\n" "$margin" "" "$line"
+				printf '%*s%s\n' "$margin" "" "$line"
 			else
 				case "$line" in
-					"### "*) sty="\e[35;1m" && line="$(echo "$line" | cut -c 5- )" ;;
-					"## "*) sty="\e[35;4m" && line="$(echo "$line" | cut -c 4-)" ;;
-					"# "*) sty="\e[35;4;1m" && line="$(echo "$line" | cut -c 3-)" ;;
-					"> "*) sty="  \e[2;3m" && line="$(echo "$line" | cut -c 3-)" ;;
+					"### "*) sty='\e[35;1m' && line="$(echo "$line" | cut -c 5- )" ;;
+					"## "*) sty='\e[35;4m' && line="$(echo "$line" | cut -c 4-)" ;;
+					"# "*) sty='\e[35;4;1m' && line="$(echo "$line" | cut -c 3-)" ;;
+					"> "*) sty='  \e[2;3m' && line="$(echo "$line" | cut -c 3-)" ;;
 					"=>"*)
 						link="$(echo "$line" | sed -e 's/^=> *\(\S\+\)\(\s*.*\)/\1 \2/g')"
 						echo "$link" >> "$cachedir/links.txt"
 
+						# shellcheck disable=SC2086
 						line="$(echo $link | cut -d' ' -f2-)"
 						[ -z "$line" ] && line="$link"
-						sty="\e[36;3m"
-						line="\e[35m=>\e[36;3m $line"
+						sty='\e[36;3m'
+						line="\\e[35m=>\\e[36;3m $line"
 						;;
-					'* '*) sty="" && line="\e[35;1m •\e[0m$(echo "$line" | cut -c 2-)";;
+					'* '*) sty="" && line="\\e[35;1m •\\e[0m$(echo "$line" | cut -c 2-)";;
 					*) sty="";;
 				esac
 				echo "$line" | fold -w $width -s | {
 					while IFS='' read -r txt
 					do
 						printf "%*s" "$margin" ""
-						printf "$sty$txt\n"
+						# shellcheck disable=SC2059
+						printf "$sty$txt\\n"
 					done
 				}
 			fi
@@ -249,7 +255,7 @@ fetch() {
 				url="$(sed "${i}q;d" "$cachedir/bookmarks" | cut -d' ' -f1)"
 		esac
 
-		read proto host port path << EOF
+		read -r proto host port path << EOF
 $(host="$2" parseurl "$url")
 EOF
 		fetch "$proto" "$host" "$port" "$path"
@@ -276,13 +282,13 @@ esac
 tput smcup
 
 # Restore terminal
-trap "tput rmcup && exit" EXIT SIGINT SIGHUP
+trap "tput rmcup && exit" EXIT INT HUP
 
 # Configuration
-[ -n "$HOME/.config/astro" ] && mkdir -p "$HOME/.config/astro"
+mkdir -p "$HOME/.config/astro"
 configfile="$HOME/.config/astro/astro.conf"
 
-[ -n "$HOME/.cache/astro" ] && mkdir -p "$HOME/.cache/astro"
+mkdir -p "$HOME/.cache/astro"
 cachedir="$HOME/.cache/astro"
 
 LESSKEY="$HOME/.config/astro/less.keys"
@@ -315,4 +321,5 @@ fi
 }
 
 # First request
+# shellcheck disable=SC2046
 fetch $(parseurl "${args:-$homepage}")
