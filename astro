@@ -55,7 +55,7 @@ $(echo "$1" | sed -E 's@^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\?([^#]*))?(#(.*))
 EOF
 
 	[ "$debug" ] && echo "Parsed URL: proto: $proto host: $hostport path: $path" >&2 && sleep 2
-	if [ "$host" ] && [ "$hostport" = "" ]
+	if [ "$oldhost" ] && [ "$hostport" = "" ]
 	then
 		hostport="$host"
 	elif [ "$hostport" = "" ]
@@ -68,6 +68,13 @@ EOF
 $hostport
 EOF
 
+	# Check path continuation
+	if [ "$oldhost" = "$host" ]
+	then
+		case "$oldpath" in
+			*"/") path="$oldpath$path" ;;
+		esac
+	fi
 	[ "$debug" ] && echo "Response: proto: ${proto:-gemini} host: $host port: ${port:-1965} path: ${path#/}" >&2 && sleep 2
 	echo "${proto:-gemini}" "$host" "${port:-1965}" "${path#/}" "$rest"
 	return 0
@@ -256,7 +263,7 @@ fetch() {
 		esac
 
 		read -r proto host port path << EOF
-$(host="$2" parseurl "$url")
+$(oldhost="$2" oldpath="$4" parseurl "$url")
 EOF
 		fetch "$proto" "$host" "$port" "$path"
 	}
