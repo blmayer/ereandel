@@ -292,13 +292,15 @@ tput smcup
 trap "tput rmcup && exit" EXIT INT HUP
 
 # Configuration
-mkdir -p "$HOME/.config/astro"
-configfile="$HOME/.config/astro/astro.conf"
+confighome=${XDG_CONFIG_HOME:-$HOME/.config}
+mkdir -p "$confighome/astro"
+configfile="$confighome/astro/astro.conf"
 
-mkdir -p "$HOME/.cache/astro"
-cachedir="$HOME/.cache/astro"
+cachehome=${XDG_CACHE_HOME:-$HOME/.cache}
+mkdir -p "$cachehome/astro"
+cachedir="$cachehome/astro"
 
-LESSKEY="$HOME/.config/astro/less.keys"
+LESSKEY="$confighome/astro/less.keys"
 
 # This is the final binary form, to save space, it corresponds to:
 # o (49): to to a URL
