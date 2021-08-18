@@ -1,7 +1,7 @@
 #!/bin/sh
 
 usage() {
-	echo "Astro v0.5.0: Browse the gemini web on the terminal."
+	echo "Astro v0.9.1: Browse the gemini web on the terminal."
 	echo ""
 	echo "Usage: astro [url]|[option]"
 	echo ""
@@ -35,10 +35,10 @@ usage() {
 }
 
 version() {
-	echo "astro 0.5.0"
+	echo "astro 0.9.1"
 	echo "Copyright (C) 2021 Brian Mayer."
 	echo "License MIT: MIT License <https://opensource.org/licenses/MIT>"
-	echo "THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,"
+	echo "THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND,"
 	echo "EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF"
 	echo "MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT."
 	echo ""
@@ -71,6 +71,7 @@ EOF
 	# Check path continuation
 	if [ "$oldhost" = "$host" ]
 	then
+		: "${oldpath:=}"
 		case "$oldpath" in
 			*"/") path="$oldpath$path" ;;
 		esac
@@ -292,16 +293,18 @@ tput smcup
 trap "tput rmcup && exit" EXIT INT HUP
 
 # Configuration
-mkdir -p "$HOME/.config/astro"
-configfile="$HOME/.config/astro/astro.conf"
+confighome=${XDG_CONFIG_HOME:-$HOME/.config}
+mkdir -p "$confighome/astro"
+configfile="$confighome/astro/astro.conf"
 
-mkdir -p "$HOME/.cache/astro"
-cachedir="$HOME/.cache/astro"
+cachehome=${XDG_CACHE_HOME:-$HOME/.cache}
+mkdir -p "$cachehome/astro"
+cachedir="$cachehome/astro"
 
-LESSKEY="$HOME/.config/astro/less.keys"
+LESSKEY="$confighome/astro/less.keys"
 
 # This is the final binary form, to save space, it corresponds to:
-# o (49): to to a URL
+# o (49): go to a URL
 # r (50): reload page
 # g (51): go to a link
 # b (52): go back
