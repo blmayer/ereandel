@@ -71,6 +71,7 @@ EOF
 	# Check path continuation
 	if [ "$oldhost" = "$host" ]
 	then
+		: "${oldpath:=}"
 		case "$oldpath" in
 			*"/") path="$oldpath$path" ;;
 		esac
