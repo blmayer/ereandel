@@ -45,6 +45,13 @@ version() {
 	echo "Written by Brian Lee Mayer."
 }
 
+getprevious() {
+	sed -i '$d' "$histfile"
+	prev="$(tail -n 1 "$histfile")"
+	sed -i '$d' "$histfile"
+	echo "$prev"
+}
+
 # Returns the complete url scheme with gemini defaults
 # Parameters: url
 parseurl() {
@@ -94,6 +101,10 @@ fetch() {
 
 	[ "$debug" ] && echo "Requesting $1://$2:$3/$4$5" >&2
 	printf '\033]2;%s\007' "astro: $2/$4"
+
+	echo "$1://$2:$3/$4$5" >> "$histfile"
+
+	clear
 	echo "$1://$2:$3/$4$5" | openssl s_client \
 		-connect "$2:$3" -crlf -quiet \
 		-ign_eof 2> /dev/null | {
@@ -141,8 +152,9 @@ fetch() {
 				;;
 			51)
 				echo "Page not found!" >&2
+				url="$(getprevious)"
 				# shellcheck disable=SC2046
-				fetch $(parseurl "$prev")
+				fetch $(parseurl "$url")
 				return 0
 				;;
 			52)
@@ -230,22 +242,17 @@ fetch() {
 				printf "Type url: "
 				read -r url <&1
 				[ "$debug" ] && echo "New url: $url" >&2
-				prev="$1://$2:$3/$4"
 				set --
 				;;
 			50) url="$1://$2:$3/$4" ;;
 			51)
 				# Follow link
-				prev="$1://$2:$3/$4"
-				[ "$debug" ] && echo "prev: $prev" >&2
-
-				clear
 				cat -n "$cachedir/links.txt"
 				printf "Enter link number: "
 				read -r i <&1
 				url="$(sed "${i}q;d" "$cachedir/links.txt" | cut -d' ' -f1)"
 				;;
-			52) url="$prev" ;;
+			52) url="$(getprevious)" ;;
 			53) url="$homepage"; shift $# ;;
 			54) 
 				echo "Enter description: (optional)"
@@ -254,10 +261,6 @@ fetch() {
 				echo "$url $desc" >> "$cachedir/bookmarks"
 				;;
 			55)
-				prev="$1://$2:$3/$4"
-				[ "$debug" ] && echo "prev: $prev" >&2
-
-				clear
 				cat -n "$cachedir/bookmarks"
 				printf "Enter link number: "
 				read -r i <&1
@@ -290,9 +293,6 @@ esac
 # Save terminal
 tput smcup
 
-# Restore terminal
-trap "tput rmcup && exit" EXIT INT HUP
-
 # Configuration
 confighome=${XDG_CONFIG_HOME:-$HOME/.config}
 mkdir -p "$confighome/astro"
@@ -301,8 +301,12 @@ configfile="$confighome/astro/astro.conf"
 cachehome=${XDG_CACHE_HOME:-$HOME/.cache}
 mkdir -p "$cachehome/astro"
 cachedir="$cachehome/astro"
+histfile="$cachedir/history"
 
 LESSKEY="$confighome/astro/less.keys"
+
+# Restore terminal
+trap "tput rmcup && rm "$histfile"; exit" EXIT INT HUP
 
 # This is the final binary form, to save space, it corresponds to:
 # o (49): go to a URL
