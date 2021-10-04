@@ -62,7 +62,7 @@ $(echo "$1" | sed -E 's@^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\?([^#]*))?(#(.*))
 EOF
 
 	[ "$debug" ] && echo "Parsed URL: proto: $proto host: $hostport path: $path" >&2 && sleep 2
-	if [ "$oldhost" ] && [ "${hostport// /}" = "" ]
+	if [ "$oldhost" ] && [ "$(echo "$hostport" | sed 's/ //g')" = "" ]
 	then
 		hostport="$oldhost"
 	elif [ "$hostport" = "" ]
@@ -306,7 +306,7 @@ histfile="$cachedir/history"
 LESSKEY="$confighome/astro/less.keys"
 
 # Restore terminal
-trap "tput rmcup && rm "$histfile"; exit" EXIT INT HUP
+trap "tput rmcup && rm $histfile; exit" EXIT INT HUP
 
 # This is the final binary form, to save space, it corresponds to:
 # o (49): go to a URL
