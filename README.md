@@ -50,7 +50,7 @@ The file uses a simple `key=value` style, see the complete example for the defau
 
 ```
 margin=8
-homepage=gmn.clttr.info
+homepage=gemini.circumlunar.space
 style-header1=35;4;1
 style-header2=35;1
 style-header3=35;4
