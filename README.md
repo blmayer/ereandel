@@ -42,6 +42,25 @@ no arguments takes you to *gemini.circumlunar.space*:
 More coming.
 
 
+### Configuration
+
+You can setup a config file at `~/.config/astro/astro.conf` to configure *astro* the way you like.
+
+The file uses a simple `key=value` style, see the complete example for the default values below. The `style-` keys must be ANSI style codes.
+
+```
+margin=8
+homepage=gemini.circumlunar.space
+style-header1=35;4;1
+style-header2=35;1
+style-header3=35;4
+style-quote=2;3
+style-link-bullet=33
+style-link-text=36;3
+style-list-bullet=35;1
+style-list-text=0
+```
+
 ## Meta
 
 This software is a work in progress and may not work as it is intended to.
