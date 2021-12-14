@@ -258,13 +258,13 @@ fetch() {
 				echo "Enter description: (optional)"
 				read -r desc <&1
 				url="$1://$2:$3/$4"
-				echo "$url $desc" >> "$cachedir/bookmarks"
+				echo "$url $desc" >> "$bookmarkfile"
 				;;
 			55)
-				cat -n "$cachedir/bookmarks"
+				cat -n "$bookmarkfile"
 				printf "Enter link number: "
 				read -r i <&1
-				url="$(sed "${i}q;d" "$cachedir/bookmarks" | cut -d' ' -f1)"
+				url="$(sed "${i}q;d" "$bookmarkfile" | cut -d' ' -f1)"
 		esac
 
 		read -r proto host port path << EOF
@@ -297,11 +297,18 @@ tput smcup
 confighome=${XDG_CONFIG_HOME:-$HOME/.config}
 mkdir -p "$confighome/astro"
 configfile="$confighome/astro/astro.conf"
+bookmarkfile="$confighome/astro/bookmarks"
 
 cachehome=${XDG_CACHE_HOME:-$HOME/.cache}
 mkdir -p "$cachehome/astro"
 cachedir="$cachehome/astro"
 histfile="$cachedir/history"
+
+# move old bookmark file to new location
+if [ -f "$cachedir/bookmarks" ] && [ ! -f "$bookmarkfile" ]
+then
+	mv "$cachedir/bookmarks" "$bookmarkfile"
+fi
 
 LESSKEY="$confighome/astro/less.keys"
 
