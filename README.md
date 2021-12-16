@@ -32,9 +32,9 @@ astro can work with client certificates if capsules requires them for authentica
 
 astro allows a single client certificate per (sub)domain identified by it's name. If a client cert for a specific domain is available astro will send it to the server with every request.
 
-When a resource requires a client cert and astro can't find one it will show you a command to create a client cert for the capsule.
+When a resource requires a client cert and astro can't find one it will show you a command to create a client cert for the capsule. The certicates are stored in `~/.config/astro/certs/`.
 
-The certicates are stored in `~/.config/astro/certs/`.
+To remove a certificate simply delete the `<domain>.crt` and `<domain>.key` files in the directory mentioned above.
 
 ### Key bindings
 
