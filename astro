@@ -105,8 +105,15 @@ fetch() {
 	echo "$1://$2:$3/$4$5" >> "$histfile"
 
 	clear
-	echo "$1://$2:$3/$4$5" | openssl s_client \
-		-connect "$2:$3" -crlf -quiet \
+	certfile=""
+	if [ -f "$certdir/$2.crt" ] && [ -f "$certdir/$2.key" ]
+	then
+		certfile="-cert \"$certdir/$2.crt\" -key \"$certdir/$2.key\""
+		[ "$debug" ] && echo "using client cert for domain: $certfile" >&2
+	fi
+
+	echo "$1://$2:$3/$4$5" | eval openssl s_client \
+		-connect "$2:$3" $certfile -crlf -quiet \
 		-ign_eof 2> /dev/null | {
 
 		# First line is status and meta information
@@ -168,6 +175,11 @@ fetch() {
 				return 12
 				;;
 			60)
+				echo "client certificate required, to create a client cert use the following command:" >&2
+				echo "openssl req -x509 -newkey rsa:4096 \\" >&2
+				echo "	-keyout $certdir/$2.key \\" >&2
+				echo "	-out $certdir/$2.crt \\" >&2
+				echo "	-days 36500 -nodes" >&2
 				return 13
 				;;
 			61)
@@ -298,10 +310,12 @@ confighome=${XDG_CONFIG_HOME:-$HOME/.config}
 mkdir -p "$confighome/astro"
 configfile="$confighome/astro/astro.conf"
 bookmarkfile="$confighome/astro/bookmarks"
+certdir="$confighome/astro/certs"
+mkdir -p "$certdir"
 
 cachehome=${XDG_CACHE_HOME:-$HOME/.cache}
-mkdir -p "$cachehome/astro"
 cachedir="$cachehome/astro"
+mkdir -p "$cachedir"
 histfile="$cachedir/history"
 
 # move old bookmark file to new location
