@@ -54,9 +54,14 @@ More coming.
 
 You can setup a config file at `~/.config/astro/astro.conf` to configure *astro* the way you like.
 
-The file uses a simple `key=value` style, see the complete example for the default values below. The `style-` keys must be ANSI style codes.
+The file uses a simple `key=value` style, see the complete example for the default values below.
+
+hints:
+* `astro` will be appended to `cachehome`, the directory must be writable for your user.
+* The `style-` keys must be ANSI style codes.
 
 ```
+cachehome=~/.cache/
 margin=8
 homepage=gemini.circumlunar.space
 style-header1=35;4;1
