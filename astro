@@ -113,12 +113,13 @@ fetch() {
 	fi
 
 	echo "$1://$2:$3/$4$5" | eval openssl s_client \
-		-connect "$2:$3" $certfile -crlf -quiet \
+		-connect "$2:$3" "$certfile" -crlf -quiet \
 		-ign_eof 2> /dev/null | {
 
 		# First line is status and meta information
 		read -r status meta
 		meta="$(echo "$meta" | tr -d '\r')"
+		# shellcheck disable=SC2030
 		[ "$debug" ] && echo "Response header: $status $meta" >&2 && sleep 1
 
 		# Validate
@@ -192,7 +193,7 @@ fetch() {
 
 		# Success
 		[ "$debug" ] && echo "Success, reading body"
-		[ -f "$linkfile" ] && rm "$linkfile"
+		[ -f "$linksfile" ] && rm "$linksfile"
 
 		# Set charset
 		charset="$(echo "$meta" | grep -i "charset=" | sed -e 's/.*charset=\([^;]\+\).*/\1/Ig')"
@@ -222,7 +223,7 @@ fetch() {
 					"> "*) sty="  $sty_quote" && line="$(echo "$line" | cut -c 3-)" ;;
 					"=>"*)
 						link="$(echo "$line" | sed -e 's/^=> *\(\S\+\)\(\s*.*\)/\1 \2/g')"
-						echo "$link" >> "$linkfile"
+						echo "$link" >> "$linksfile"
 
 						# shellcheck disable=SC2086
 						line="$(echo $link | cut -d' ' -f2-)"
@@ -259,10 +260,10 @@ fetch() {
 			50) url="$1://$2:$3/$4" ;;
 			51)
 				# Follow link
-				cat -n "$linkfile"
+				cat -n "$linksfile"
 				printf "Enter link number: "
 				read -r i <&1
-				url="$(sed "${i}q;d" "$linkfile" | cut -d' ' -f1)"
+				url="$(sed "${i}q;d" "$linksfile" | cut -d' ' -f1)"
 				;;
 			52) url="$(getprevious)" ;;
 			53) url="$homepage"; shift $# ;;
@@ -333,7 +334,7 @@ fi
 cachedir="$cachehome/astro"
 mkdir -p "$cachedir"
 histfile="$cachedir/history"
-linkfile="$cachedir/links"
+linksfile="$cachedir/links"
 
 # move old bookmark file to new location
 if [ -f "$cachedir/bookmarks" ] && [ ! -f "$bookmarkfile" ]
@@ -344,7 +345,7 @@ fi
 LESSKEY="$confighome/astro/less.keys"
 
 # Restore terminal
-trap "tput rmcup && rm $histfile $linkfile; exit" EXIT INT HUP
+trap 'tput rmcup && rm $histfile $linksfile; exit' EXIT INT HUP
 
 # This is the final binary form, to save space, it corresponds to:
 # o (49): go to a URL
@@ -379,7 +380,8 @@ sty_linkt="\\033[${sty_linkt}m"
 sty_listb="\\033[${sty_listb}m"
 sty_listt="\\033[${sty_listt}m"
 
-[ -e "$debug" ] && {
+# shellcheck disable=SC2031
+[ "$debug" ] && {
 	echo "Starting with ${args:-$homepage}"
 	echo " - margin:	$margin"
 }

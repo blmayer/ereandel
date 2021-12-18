@@ -56,7 +56,7 @@ You can setup a config file at `~/.config/astro/astro.conf` to configure *astro*
 
 The file uses a simple `key=value` style, see the complete example for the default values below.
 
-hints:
+**hints:**
 * `astro` will be appended to `cachehome`, the directory must be writable for your user.
 * The `style-` keys must be ANSI style codes.
 
