@@ -35,7 +35,7 @@ usage() {
 }
 
 version() {
-	echo "astro 0.10.0"
+	echo "astro 0.14.0"
 	echo "Copyright (C) 2021 Brian Mayer."
 	echo "License MIT: MIT License <https://opensource.org/licenses/MIT>"
 	echo "THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND,"
@@ -113,12 +113,13 @@ fetch() {
 	fi
 
 	echo "$1://$2:$3/$4$5" | eval openssl s_client \
-		-connect "$2:$3" $certfile -crlf -quiet \
+		-connect "$2:$3" "$certfile" -crlf -quiet \
 		-ign_eof 2> /dev/null | {
 
 		# First line is status and meta information
 		read -r status meta
 		meta="$(echo "$meta" | tr -d '\r')"
+		# shellcheck disable=SC2030
 		[ "$debug" ] && echo "Response header: $status $meta" >&2 && sleep 1
 
 		# Validate
@@ -192,7 +193,7 @@ fetch() {
 
 		# Success
 		[ "$debug" ] && echo "Success, reading body"
-		[ -f "$cachedir/links.txt" ] && rm "$cachedir/links.txt"
+		[ -f "$linksfile" ] && rm "$linksfile"
 
 		# Set charset
 		charset="$(echo "$meta" | grep -i "charset=" | sed -e 's/.*charset=\([^;]\+\).*/\1/Ig')"
@@ -222,7 +223,7 @@ fetch() {
 					"> "*) sty="  $sty_quote" && line="$(echo "$line" | cut -c 3-)" ;;
 					"=>"*)
 						link="$(echo "$line" | sed -e 's/^=> *\(\S\+\)\(\s*.*\)/\1 \2/g')"
-						echo "$link" >> "$cachedir/links.txt"
+						echo "$link" >> "$linksfile"
 
 						# shellcheck disable=SC2086
 						line="$(echo $link | cut -d' ' -f2-)"
@@ -259,10 +260,10 @@ fetch() {
 			50) url="$1://$2:$3/$4" ;;
 			51)
 				# Follow link
-				cat -n "$cachedir/links.txt"
+				cat -n "$linksfile"
 				printf "Enter link number: "
 				read -r i <&1
-				url="$(sed "${i}q;d" "$cachedir/links.txt" | cut -d' ' -f1)"
+				url="$(sed "${i}q;d" "$linksfile" | cut -d' ' -f1)"
 				;;
 			52) url="$(getprevious)" ;;
 			53) url="$homepage"; shift $# ;;
@@ -313,36 +314,10 @@ bookmarkfile="$confighome/astro/bookmarks"
 certdir="$confighome/astro/certs"
 mkdir -p "$certdir"
 
-cachehome=${XDG_CACHE_HOME:-$HOME/.cache}
-cachedir="$cachehome/astro"
-mkdir -p "$cachedir"
-histfile="$cachedir/history"
-
-# move old bookmark file to new location
-if [ -f "$cachedir/bookmarks" ] && [ ! -f "$bookmarkfile" ]
-then
-	mv "$cachedir/bookmarks" "$bookmarkfile"
-fi
-
-LESSKEY="$confighome/astro/less.keys"
-
-# Restore terminal
-trap "tput rmcup && rm $histfile; exit" EXIT INT HUP
-
-# This is the final binary form, to save space, it corresponds to:
-# o (49): go to a URL
-# r (50): reload page
-# g (51): go to a link
-# b (52): go back
-# H (53): go to homepage
-# m (54): add page to bookmarks
-# M (55): go to a bookmark
-[ -n "$LESSKEY" ] && echo "AE0rR2MjAG8AmDEAcgCYMgBnAJgzAGIAmDQASACYNQBtAJg2AE0AmDcAZQAAdgAAeEVuZA==" | \
-	base64 -d  > "$LESSKEY"
-
 # Configuration step
 if [ -e "$configfile" ]
 then
+	cachehome="$(grep cachehome "$configfile" | cut -d '=' -f 2,3)"
 	margin="$(grep margin "$configfile" | cut -d '=' -f 2,3)"
 	homepage="$(grep homepage "$configfile" | cut -d '=' -f 2,3)"
 	sty_header1="$(grep style-header1 "$configfile" | cut -d '=' -f 2-)"
@@ -354,6 +329,34 @@ then
 	sty_listb="$(grep style-list-bullet "$configfile" | cut -d '=' -f 2-)"
 	sty_listt="$(grep style-list-text "$configfile" | cut -d '=' -f 2-)"
 fi
+
+[ -z "$cachehome" ] && cachehome=${XDG_CACHE_HOME:-$HOME/.cache}
+cachedir="$cachehome/astro"
+mkdir -p "$cachedir"
+histfile="$cachedir/history"
+linksfile="$cachedir/links"
+
+# move old bookmark file to new location
+if [ -f "$cachedir/bookmarks" ] && [ ! -f "$bookmarkfile" ]
+then
+	mv "$cachedir/bookmarks" "$bookmarkfile"
+fi
+
+LESSKEY="$confighome/astro/less.keys"
+
+# Restore terminal
+trap 'tput rmcup && rm $histfile $linksfile; exit' EXIT INT HUP
+
+# This is the final binary form, to save space, it corresponds to:
+# o (49): go to a URL
+# r (50): reload page
+# g (51): go to a link
+# b (52): go back
+# H (53): go to homepage
+# m (54): add page to bookmarks
+# M (55): go to a bookmark
+[ -n "$LESSKEY" ] && echo "AE0rR2MjAG8AmDEAcgCYMgBnAJgzAGIAmDQASACYNQBtAJg2AE0AmDcAZQAAdgAAeEVuZA==" | \
+	base64 -d  > "$LESSKEY"
 
 # Default values
 [ -z "$margin" ] && margin=8
@@ -377,7 +380,8 @@ sty_linkt="\\033[${sty_linkt}m"
 sty_listb="\\033[${sty_listb}m"
 sty_listt="\\033[${sty_listt}m"
 
-[ -e "$debug" ] && {
+# shellcheck disable=SC2031
+[ "$debug" ] && {
 	echo "Starting with ${args:-$homepage}"
 	echo " - margin:	$margin"
 }
