@@ -176,12 +176,18 @@ fetch() {
 				return 12
 				;;
 			60)
-				echo "client certificate required, to create a client cert use the following command:" >&2
-				echo "openssl req -x509 -newkey rsa:4096 \\" >&2
-				echo "	-keyout $certdir/$2.key \\" >&2
-				echo "	-out $certdir/$2.crt \\" >&2
-				echo "	-days 36500 -nodes" >&2
-				return 13
+				printf "client certificate required, to create a client cert use the following command:\n\n"
+				printf "\topenssl req -x509 -newkey rsa:4096 -keyout $certdir/$2.key -out $certdir/$2.crt -days 36500 -nodes\n\n"
+				printf "press 'return' to reload the page or 'b' to go back to the previous page:\n"
+				read -r in <&1
+				if [ "$in" = "b" ]
+				then
+					url="$(getprevious)"
+					fetch $(parseurl "$url")
+				else
+					fetch $1 $2 $3 $4 $5
+				fi
+				return 0
 				;;
 			61)
 				return 14
