@@ -139,7 +139,10 @@ fetch() {
 				# Redirect
 				[ "$debug" ] && echo "Redirect to: $meta" >&2
 				# shellcheck disable=SC2046
-				fetch $(parseurl "$meta")
+				read -r proto host port path << EOF
+					$(oldhost="$2" oldpath="$4" parseurl "$meta")
+EOF
+				fetch "$proto" "$host" "$port" "$path"
 				return 0
 				;;
 			40)
