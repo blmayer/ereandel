@@ -214,6 +214,7 @@ EOF
 		[ "$debug" ] && echo "Charset: $charset" >&2 && sleep 1
 
 		i=1
+		linkcounter=1
 		while IFS='' read -r line
 		do
 			line="$(echo "$line" | tr -d '\r')"
@@ -238,7 +239,8 @@ EOF
 						line="$(echo $link | cut -d' ' -f2-)"
 						[ -z "$line" ] && line="$link"
 						sty="$sty_linkt"
-						line="$sty_linkb=>$sty_linkt $line"
+						line="$sty_linkb$linkcounter>$sty_linkt $line"
+						linkcounter=$((linkcounter + 1))
 						;;
 					'* '*) sty="" && line=" $sty_listb•$sty_listt$(echo "$line" | cut -c 2-)";;
 					*) sty="";;
