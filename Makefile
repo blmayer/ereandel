@@ -3,5 +3,5 @@
 PREFIX ?= ~/.local
 
 install:
-	cp astro $(PREFIX)/bin/
+	install -m +x astro -d $(PREFIX)/bin
 
