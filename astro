@@ -186,6 +186,9 @@ EOF
 				if [ "$in" = "b" ]
 				then
 					url="$(getprevious)"
+					
+					# word splitting here is intentional
+					# shellcheck disable=SC2046
 					fetch $(parseurl "$url")
 				else
 					fetch "$1" "$2" "$3" "$4" "$5"
