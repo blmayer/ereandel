@@ -18,8 +18,11 @@ find a new issue you can add it, suggestions are welcome too!
 
 ## Submitting changes
 
-After finding an issue to work on, fork the repo, commit and then
-submit the PR. I'll review it and if I'm happy with it, the PR will
-be approved.
+After finding an issue to work on, fork the repo, make the desired changes.
+Then use shellcheck to lint the code, please fix any warnings before submiting
+your changes.
+
+Now you can submit the PR. I'll review it and if I'm happy with it, the PR will
+be approved and merged.
 
 And that's it, you made a contribution.
