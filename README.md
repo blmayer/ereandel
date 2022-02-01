@@ -79,6 +79,11 @@ style-list-text=0
 This software is a work in progress and may not work as it is intended to.
 
 
+### Contributing
+
+Please read the [contributing file](CONTRIBUTING.md).
+
+
 ### Further works
 
 - Better history
