@@ -251,7 +251,7 @@ EOF
 					do
 						printf "%*s" "$margin" ""
 						# shellcheck disable=SC2059
-						printf "$sty$txt\\n"
+						printf -- "$sty$txt\\n"
 					done
 				}
 			fi
