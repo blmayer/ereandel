@@ -58,7 +58,7 @@ parseurl() {
 	# shellcheck disable=SC2154
 	[ "$debug" ] && echo "Parsing: $1" >&2 && sleep 2
 	IFS='|' read -r proto hostport path rest << EOF
-$(echo "$1" | sed -E 's@^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\?([^#]*))?(#(.*))?@\2\|\4\|\5\|\7@g')
+$(echo "$1" | sed -E 's@^(([^:/?#]+):)?(/?/?([^/?#]*))?([^?#]*)(\?([^#]*))?(#(.*))?@\2\|\4\|\5\|\7@g')
 EOF
 
 	[ "$debug" ] && echo "Parsed URL: proto: $proto host: $hostport path: $path" >&2 && sleep 2
