@@ -55,36 +55,26 @@ getprevious() {
 # Returns the complete url scheme with gemini defaults
 # Parameters: url
 parseurl() {
-	# shellcheck disable=SC2154
+	# Credits: https://stackoverflow.com/a/6174447/7618649
 	[ "$debug" ] && echo "Parsing: $1" >&2 && sleep 2
-	IFS='|' read -r proto hostport path rest << EOF
-$(echo "$1" | sed -E 's@^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\?([^#]*))?(#(.*))?@\2\|\4\|\5\|\7@g')
-EOF
-
-	[ "$debug" ] && echo "Parsed URL: proto: $proto host: $hostport path: $path" >&2 && sleep 2
-	if [ "$oldhost" ] && [ "$(echo "$hostport" | sed 's/ //g')" = "" ]
-	then
-		hostport="$oldhost"
-	elif [ "$hostport" = "" ]
-	then
-		hostport="${path%%/}"
-		path=
+	proto="$(echo "$1" | grep :// | sed -e 's,^\(.*://\).*,\1,g')"
+	if [ "$proto" ]
+	then 
+		url="$(echo "$1" | sed -e "s@$proto@@g")"
+	else
+		url="$1"
 	fi
+	[ "$debug" ] && echo "url: $url" >&2 && sleep 2
 
-	IFS=':' read -r host port << EOF
-$hostport
-EOF
+	proto="$(echo "$proto" | sed -e 's,:\?//,,g')"
+	user="$(echo "$url" | grep @ | cut -d@ -f1)"
+	hostport="$(echo "$url" | sed -e "s/$user@//g" | cut -d/ -f1)"
+	host="$(echo "$hostport" | sed -e 's,:.*,,g')"
+	port="$(echo "$hostport" | sed -e 's,^.*:,:,g' -e 's,.*:\([0-9]*\).*,\1,g' -e 's,[^0-9],,g')"
+	path="$(echo "$url" | grep / | cut -d/ -f2-)"
 
-	# Check path continuation
-	if [ "$oldhost" = "$host" ]
-	then
-		: "${oldpath:=}"
-		case "$path" in
-			"/"*) ;;
-			*) path="$oldpath$path" ;;
-		esac
-	fi
-	[ "$debug" ] && echo "Response: proto: ${proto:-gemini} host: $host port: ${port:-1965} path: ${path#/}" >&2 && sleep 2
+	[ "$oldhost" -a !"$host" ] && path="$host" && host="$oldhost"
+	[ "$debug" ] && echo "Parsed: proto: ${proto:-gemini} host: $host port: ${port:-1965} path: ${path#/}" >&2 && sleep 2
 	echo "${proto:-gemini}" "$host" "${port:-1965}" "${path#/}" "$rest"
 	return 0
 }
@@ -161,9 +151,10 @@ EOF
 			44)
 				return 7
 				;;
-			51)
+			51*)
 				echo "Page not found!" >&2
 				url="$(getprevious)"
+				[ "$debug" ] && echo "Previous page: $url" >&2 && sleep 2
 				# shellcheck disable=SC2046
 				fetch $(parseurl "$url")
 				return 0
@@ -357,7 +348,7 @@ fi
 LESSKEY="$confighome/astro/less.keys"
 
 # Restore terminal
-trap 'tput rmcup && rm $histfile $linksfile; exit' EXIT INT HUP
+trap 'tput rmcup && rm $histfile $linksfile 2&> /dev/null; exit' EXIT INT HUP
 
 # This is the final binary form, to save space, it corresponds to:
 # o (49): go to a URL
