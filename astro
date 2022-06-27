@@ -73,7 +73,8 @@ parseurl() {
 	port="$(echo "$hostport" | sed -e 's,^.*:,:,g' -e 's,.*:\([0-9]*\).*,\1,g' -e 's,[^0-9],,g')"
 	path="$(echo "$url" | grep / | cut -d/ -f2-)"
 
-	[ "$oldhost" -a !"$host" ] && path="$host" && host="$oldhost"
+	[ "$oldhost" ] && [ ! "$path" ] && path="$host" && host="$oldhost"
+	[ "$oldhost" ] && [ ! "$host" ] && host="$oldhost"
 	[ "$debug" ] && echo "Parsed: proto: ${proto:-gemini} host: $host port: ${port:-1965} path: ${path#/}" >&2 && sleep 2
 	echo "${proto:-gemini}" "$host" "${port:-1965}" "${path#/}" "$rest"
 	return 0
