@@ -93,7 +93,7 @@ fetch() {
 	[ "$debug" ] && echo "Requesting $1://$2:$3/$4$5" >&2
 	printf '\033]2;%s\007' "astro: $2/$4"
 
-	echo "$1://$2:$3/$4$5" >> "$histfile"
+	echo "$1 $2 $3 $4 $5" >> "$histfile"
 
 	clear
 	certfile=""
@@ -157,7 +157,7 @@ EOF
 				url="$(getprevious)"
 				[ "$debug" ] && echo "Previous page: $url" >&2 && sleep 2
 				# shellcheck disable=SC2046
-				fetch $(parseurl "$url")
+				fetch $url
 				return 0
 				;;
 			52)
@@ -181,7 +181,7 @@ EOF
 					
 					# word splitting here is intentional
 					# shellcheck disable=SC2046
-					fetch $(parseurl "$url")
+					fetch $url
 				else
 					fetch "$1" "$2" "$3" "$4" "$5"
 				fi
@@ -269,7 +269,10 @@ EOF
 				read -r i <&1
 				url="$(sed "${i}q;d" "$linksfile" | cut -d' ' -f1)"
 				;;
-			52) url="$(getprevious)" ;;
+			52) 
+				fetch $(getprevious)
+				return
+				;;
 			53) url="$homepage"; shift $# ;;
 			54) 
 				echo "Enter description: (optional)"
