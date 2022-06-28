@@ -287,6 +287,13 @@ EOF
 		read -r proto host port path << EOF
 $(oldhost="$2" oldpath="$4" parseurl "$url")
 EOF
+		if [ ! "$proto" = "gemini" ]
+                then
+                	echo "Only gemini links are supported."
+                	echo "Type a key to continue."
+                	read -r i <&1
+                	proto="$1"; host="$2"; port="$3"; path="$4"
+                fi
 		fetch "$proto" "$host" "$port" "$path"
 	}
 }
