@@ -63,6 +63,13 @@ parseurl() {
 		url="$(echo "$1" | sed -e "s@$proto@@g")"
 	else
 		url="$1"
+		if [ "$oldhost" ]
+		then
+			case "$1" in
+				"/"*) url="$oldhost$1" ;;
+				*) url="$oldhost${oldpath%/*}/$1" ;;
+			esac
+		fi
 	fi
 	[ "$debug" ] && echo "url: $url" >&2 && sleep 2
 
@@ -71,12 +78,10 @@ parseurl() {
 	hostport="$(echo "$url" | sed -e "s/$user@//g" | cut -d/ -f1)"
 	host="$(echo "$hostport" | sed -e 's,:.*,,g')"
 	port="$(echo "$hostport" | sed -e 's,^.*:,:,g' -e 's,.*:\([0-9]*\).*,\1,g' -e 's,[^0-9],,g')"
-	path="$(echo "$url" | grep / | cut -d/ -f2-)"
+	path="$(echo "${url#/*}" | sed "s@/\?$hostport@@")"
 
-	[ "$oldhost" ] && [ ! "$path" ] && path="$host" && host="$oldhost"
-	[ "$oldhost" ] && [ ! "$host" ] && host="$oldhost"
-	[ "$debug" ] && echo "Parsed: proto: ${proto:-gemini} host: $host port: ${port:-1965} path: ${path#/}" >&2 && sleep 2
-	echo "${proto:-gemini}" "$host" "${port:-1965}" "${path#/}" "$rest"
+	[ "$debug" ] && echo "Parsed: proto: ${proto:-gemini} host: $host port: ${port:-1965} path: ${path#/*}" >&2 && sleep 2
+	echo "${proto:-gemini}" "$host" "${port:-1965}" "${path#/*}" "$rest"
 	return 0
 }
 
