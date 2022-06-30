@@ -156,7 +156,7 @@ EOF
 				echo "Page not found!" >&2
 				url="$(getprevious)"
 				[ "$debug" ] && echo "Previous page: $url" >&2 && sleep 2
-				# shellcheck disable=SC2046
+				# shellcheck disable=SC2086
 				fetch $url
 				return 0
 				;;
@@ -180,7 +180,7 @@ EOF
 					url="$(getprevious)"
 					
 					# word splitting here is intentional
-					# shellcheck disable=SC2046
+					# shellcheck disable=SC2086
 					fetch $url
 				else
 					fetch "$1" "$2" "$3" "$4" "$5"
