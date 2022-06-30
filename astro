@@ -269,12 +269,13 @@ EOF
 				read -r i <&1
 				url="$(sed "${i}q;d" "$linksfile" | cut -d' ' -f1)"
 				;;
-			52) 
+			52)
+				# shellcheck disable=SC2046
 				fetch $(getprevious)
 				return
 				;;
 			53) url="$homepage"; shift $# ;;
-			54) 
+			54)
 				echo "Enter description: (optional)"
 				read -r desc <&1
 				url="$1://$2:$3/$4"
