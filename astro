@@ -120,7 +120,7 @@ typesetgmi() {
 			'* '*) sty="" && line=" $sty_listb•$sty_listt$(echo "$line" | cut -c 2-)";;
 			*) sty="";;
 		esac
-		echo "$line" | fold -w $width -s | {
+		echo "$line" | fold -w "$width" -s | {
 			while IFS='' read -r txt
 			do
 				printf "%*s" "$margin" ""
@@ -422,7 +422,7 @@ url="${args:-$homepage}"
 
 while :
 do
-	# shellcheck disable=SC2086
+	# shellcheck disable=SC2046
 	fetch $(parseurl)
 done
 
