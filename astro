@@ -166,7 +166,7 @@ EOF
 				url="$(getprevious)"
 				debug "previous page: $url"
 
-				# shellcheck disable=SC2046
+				# shellcheck disable=SC2086
 				fetch $url
 				return 0
 				;;
@@ -190,7 +190,7 @@ EOF
 					url="$(getprevious)"
 					
 					# word splitting here is intentional
-					# shellcheck disable=SC2046
+					# shellcheck disable=SC2086
 					fetch $url
 				else
 					fetch "$1" "$2" "$3" "$4" "$5"
