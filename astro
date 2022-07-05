@@ -45,6 +45,10 @@ version() {
 	echo "Written by Brian Lee Mayer."
 }
 
+debug() {
+	[ "$debug" ] && echo "DEBUG: $*" >&2 && sleep 2
+}
+
 getprevious() {
 	sed -i '$d' "$histfile"
 	prev="$(tail -n 1 "$histfile")"
@@ -56,7 +60,7 @@ getprevious() {
 # Parameters: url
 parseurl() {
 	# Credits: https://stackoverflow.com/a/6174447/7618649
-	[ "$debug" ] && echo "Parsing: $1" >&2 && sleep 2
+	debug "parsing: $1"
 	proto="$(echo "$1" | grep :// | sed -e 's,^\(.*://\).*,\1,g')"
 	if [ "$proto" ]
 	then 
@@ -65,13 +69,14 @@ parseurl() {
 		url="$1"
 		if [ "$oldhost" ]
 		then
+			debug "oldhost: $oldhost oldpath: $oldpath"
 			case "$1" in
 				"/"*) url="$oldhost$1" ;;
 				*) oldpath="/${oldpath#/*}"; url="$oldhost${oldpath%/*}/$1" ;;
 			esac
 		fi
 	fi
-	[ "$debug" ] && echo "url: $url" >&2 && sleep 2
+	debug "url: $url"
 
 	proto="$(echo "$proto" | sed -e 's,:\?//,,g')"
 	user="$(echo "$url" | grep @ | cut -d@ -f1)"
@@ -80,11 +85,9 @@ parseurl() {
 	port="$(echo "$hostport" | sed -e 's,^.*:,:,g' -e 's,.*:\([0-9]*\).*,\1,g' -e 's,[^0-9],,g')"
 	path="$(echo "${url#/*}" | sed "s@/\?$hostport@@")"
 
-	[ "$debug" ] && echo "Parsed: proto: ${proto:-gemini} host: $host port: ${port:-1965} path: ${path#/*}" >&2 && sleep 2
+	debug "parsed: proto: ${proto:-gemini} host: $host port: ${port:-1965} path: ${path#/*}"
 	echo "${proto:-gemini}" "$host" "${port:-1965}" "${path#/*}" "$rest"
-	return 0
 }
-
 
 # Fetches the gemini response from server
 # Parameters: proto, host, port and path
@@ -93,9 +96,9 @@ fetch() {
 	# Some setup first
 	cols=$(tput cols)
 	width=$((cols - (2*margin)))
-	[ "$debug" ] && echo "Text width: $width" >&2
+	debug "text width: $width"
 
-	[ "$debug" ] && echo "Requesting $1://$2:$3/$4$5" >&2
+	debug "requesting $1://$2:$3/$4$5"
 	printf '\033]2;%s\007' "astro: $2/$4"
 
 	echo "$1 $2 $3 $4 $5" >> "$histfile"
@@ -105,7 +108,7 @@ fetch() {
 	if [ -f "$certdir/$2.crt" ] && [ -f "$certdir/$2.key" ]
 	then
 		certfile="-cert \"$certdir/$2.crt\" -key \"$certdir/$2.key\""
-		[ "$debug" ] && echo "using client cert for domain: $certfile" >&2
+		debug "using client cert for domain: $certfile"
 	fi
 
 	echo "$1://$2:$3/$4$5" | eval openssl s_client \
@@ -114,9 +117,9 @@ fetch() {
 
 		# First line is status and meta information
 		read -r status meta
-		meta="$(echo "$meta" | tr -d '\r')"
-		# shellcheck disable=SC2030
-		[ "$debug" ] && echo "Response header: $status $meta" >&2 && sleep 1
+		status="$(echo "$status" | tr -d '\r\n')"
+		meta="$(echo "$meta" | tr -d '\r\n')"
+		debug "response header: $status $meta"
 
 		# Validate
 		case "$status" in
@@ -133,7 +136,8 @@ fetch() {
 				;;
 			31|32)
 				# Redirect
-				[ "$debug" ] && echo "Redirect to: $meta" >&2
+				debug "redirecting to: $meta"
+
 				# shellcheck disable=SC2046
 				read -r proto host port path << EOF
 					$(oldhost="$2" oldpath="$4" parseurl "$meta")
@@ -160,8 +164,9 @@ EOF
 			51*)
 				echo "Page not found!" >&2
 				url="$(getprevious)"
-				[ "$debug" ] && echo "Previous page: $url" >&2 && sleep 2
-				# shellcheck disable=SC2086
+				debug "previous page: $url"
+
+				# shellcheck disable=SC2046
 				fetch $url
 				return 0
 				;;
@@ -185,7 +190,7 @@ EOF
 					url="$(getprevious)"
 					
 					# word splitting here is intentional
-					# shellcheck disable=SC2086
+					# shellcheck disable=SC2046
 					fetch $url
 				else
 					fetch "$1" "$2" "$3" "$4" "$5"
@@ -201,7 +206,6 @@ EOF
 		esac
 
 		# Success
-		[ "$debug" ] && echo "Success, reading body"
 		[ -f "$linksfile" ] && rm "$linksfile"
 
 		# Set charset
@@ -211,7 +215,7 @@ EOF
 			"utf-8" | "UTF-8" | "") charset="utf8" ;;
 			"us-ascii" | "US-ASCII") charset="ascii" ;;
 		esac
-		[ "$debug" ] && echo "Charset: $charset" >&2 && sleep 1
+		debug "charset: $charset"
 
 		i=1
 		while IFS='' read -r line
@@ -256,14 +260,14 @@ EOF
 		code="$?"
 
 		# Choose what to do next
-		[ "$debug" ] && echo "pager exit code: $code" >&2
+		debug "pager exit code: $code"
 		case "$code" in
 			0) exit 0 ;;
 			49)
 				# Open url
 				printf "Type url: "
 				read -r url <&1
-				[ "$debug" ] && echo "New url: $url" >&2
+				debug "new url: $url"
 				set --
 				;;
 			50) url="$1://$2:$3/$4" ;;
@@ -274,13 +278,12 @@ EOF
 				read -r i <&1
 				url="$(sed "${i}q;d" "$linksfile" | cut -d' ' -f1)"
 				;;
-			52)
-				# shellcheck disable=SC2046
+			52) 
 				fetch $(getprevious)
-				return
+			       	return
 				;;
 			53) url="$homepage"; shift $# ;;
-			54)
+			54) 
 				echo "Enter description: (optional)"
 				read -r desc <&1
 				url="$1://$2:$3/$4"
@@ -297,12 +300,13 @@ EOF
 $(oldhost="$2" oldpath="$4" parseurl "$url")
 EOF
 		if [ ! "$proto" = "gemini" ]
-                then
-                	echo "Only gemini links are supported."
-                	echo "Type a key to continue."
-                	read -r i <&1
-                	proto="$1"; host="$2"; port="$3"; path="$4"
-                fi
+		then
+			echo "Only gemini links are supported."
+			echo "Type a key to continue."
+			read -r i <&1
+			proto="$1"; host="$2"; port="$3"; path="$4"
+		fi
+
 		fetch "$proto" "$host" "$port" "$path"
 	}
 }
@@ -401,10 +405,7 @@ sty_listb="\\033[${sty_listb}m"
 sty_listt="\\033[${sty_listt}m"
 
 # shellcheck disable=SC2031
-[ "$debug" ] && {
-	echo "Starting with ${args:-$homepage}"
-	echo " - margin:	$margin"
-}
+debug "starting with ${args:-$homepage} margin:	$margin"
 
 # First request
 # shellcheck disable=SC2046
