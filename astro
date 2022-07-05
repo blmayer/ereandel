@@ -67,7 +67,7 @@ parseurl() {
 		then
 			case "$1" in
 				"/"*) url="$oldhost$1" ;;
-				*) url="$oldhost${oldpath%/*}/$1" ;;
+				*) oldpath="/${oldpath#/*}"; url="$oldhost${oldpath%/*}/$1" ;;
 			esac
 		fi
 	fi
