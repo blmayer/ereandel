@@ -60,19 +60,17 @@ getprevious() {
 # Parameters: url
 parseurl() {
 	# Credits: https://stackoverflow.com/a/6174447/7618649
-	debug "parsing: $1"
-	proto="$(echo "$1" | grep :// | sed -e 's,^\(.*://\).*,\1,g')"
+	debug "parsing: $url oldhost: $oldhost oldpath: $oldpath"
+	proto="$(echo "$url" | grep :// | sed -e 's,^\(.*://\).*,\1,g')"
 	if [ "$proto" ]
 	then 
-		url="$(echo "$1" | sed -e "s@$proto@@g")"
+		url="$(echo "$url" | sed -e "s@$proto@@g")"
 	else
-		url="$1"
 		if [ "$oldhost" ]
 		then
-			debug "oldhost: $oldhost oldpath: $oldpath"
-			case "$1" in
+			case "$url" in
 				"/"*) url="$oldhost$1" ;;
-				*) oldpath="/${oldpath#/*}"; url="$oldhost${oldpath%/*}/$1" ;;
+				*) oldpath="/${oldpath#/*}"; url="$oldhost${oldpath%/*}/$url" ;;
 			esac
 		fi
 	fi
@@ -89,10 +87,68 @@ parseurl() {
 	echo "${proto:-gemini}" "$host" "${port:-1965}" "${path#/*}" "$rest"
 }
 
+typesetgmi() {
+	i=1
+	while IFS='' read -r line
+	do
+		line="$(echo "$line" | tr -d '\r')"
+		# shellcheck disable=SC2016
+		echo "$line" | grep -q '```' && pre=$((1 - pre)) && line=""
+
+		# Add margins and fold
+		if [ "$pre" = 1 ]
+		then
+			printf '%*s%s\n' "$margin" "" "$line"
+			continue
+		fi
+
+		case "$line" in
+			"### "*) sty="$sty_header3" && line="$(echo "$line" | cut -c 5- )" ;;
+			"## "*) sty="$sty_header2" && line="$(echo "$line" | cut -c 4-)" ;;
+			"# "*) sty="$sty_header1" && line="$(echo "$line" | cut -c 3-)" ;;
+			"> "*) sty="  $sty_quote" && line="$(echo "$line" | cut -c 3-)" ;;
+			"=>"*)
+				link="$(echo "$line" | sed -e 's/^=> *\(\S\+\)\(\s*.*\)/\1 \2/g')"
+				echo "$link" >> "$linksfile"
+
+				# shellcheck disable=SC2086
+				line="$(echo $link | cut -d' ' -f2-)"
+				[ -z "$line" ] && line="$link"
+				sty="$sty_linkt"
+				line="$sty_linkb=>$sty_linkt $line"
+				;;
+			'* '*) sty="" && line=" $sty_listb•$sty_listt$(echo "$line" | cut -c 2-)";;
+			*) sty="";;
+		esac
+		echo "$line" | fold -w $width -s | {
+			while IFS='' read -r txt
+			do
+				printf "%*s" "$margin" ""
+				# shellcheck disable=SC2059
+				printf -- "$sty$txt\\n"
+			done
+		}
+	done
+}
+
 # Fetches the gemini response from server
 # Parameters: proto, host, port and path
 # Spec draft is here: https://gemini.circumlunar.space/docs/specification.html
 fetch() {
+	if [ ! "$1" = "gemini" ]
+	then
+		echo "Only gemini links are supported."
+		echo "Type a key to continue."
+		read -r i <&1
+		read -r proto host port path << EOF
+			$(getprevious)
+EOF
+		url="$proto://$host:$port/$path"
+		url="${url:-$homepage}"
+		debug "previous page: $url"
+		return
+	fi
+
 	# Some setup first
 	cols=$(tput cols)
 	width=$((cols - (2*margin)))
@@ -113,203 +169,159 @@ fetch() {
 
 	echo "$1://$2:$3/$4$5" | eval openssl s_client \
 		-connect "$2:$3" "$certfile" -crlf -quiet \
-		-ign_eof 2> /dev/null | {
+		-ign_eof 2> /dev/null > "$cachedir/curpage"
 
-		# First line is status and meta information
-		read -r status meta
-		status="$(echo "$status" | tr -d '\r\n')"
-		meta="$(echo "$meta" | tr -d '\r\n')"
-		debug "response header: $status $meta"
+	# First line is status and meta information
+	read -r status meta < "$cachedir/curpage"
+	status="$(echo "$status" | tr -d '\r\n')"
+	meta="$(echo "$meta" | tr -d '\r\n')"
+	sed -i '1d' "$cachedir/curpage"
+	debug "response header: $status $meta"
 
-		# Validate
-		case "$status" in
-			10)
-				echo "Input needed: $meta" >&2
-				echo "Please provide the input:" >&2
-				read -r input <&1
-				fetch "$1" "$2" "$3" "$4" "?$input"
-				return 1
-				;;
-			11)
-				echo "Sensitive input needed: $meta" >&2
-				return 2
-				;;
-			31|32)
-				# Redirect
-				debug "redirecting to: $meta"
+	# Validate
+	case "$status" in
+		10)
+			echo "Input needed: $meta" >&2
+			echo "Please provide the input:" >&2
+			read -r input <&1
+			url="$1://$2:$3/$4?$input"
+			return 0
+			;;
+		11)
+			echo "Sensitive input needed: $meta" >&2
+			read -r input <&1
+			url="$1://$2:$3/$4?$input"
+			return 0
+			;;
+		31|32)
+			# Redirect
+			debug "redirecting to: $meta"
 
-				# shellcheck disable=SC2046
-				read -r proto host port path << EOF
-					$(oldhost="$2" oldpath="$4" parseurl "$meta")
+			# shellcheck disable=SC2046
+			read -r proto host port path << EOF
+				$(oldhost="$2" oldpath="$4" parseurl "$meta")
 EOF
-				fetch "$proto" "$host" "$port" "$path"
-				return 0
-				;;
-			40)
-				echo "Temporary failure" >&2
-				return 3
-				;;
-			41)
-				return 4
-				;;
-			42)
-				return 5
-				;;
-			43)
-				return 6
-				;;
-			44)
-				return 7
-				;;
-			51*)
-				echo "Page not found!" >&2
-				url="$(getprevious)"
-				debug "previous page: $url"
-
-				# shellcheck disable=SC2086
-				fetch $url
-				return 0
-				;;
-			52)
-				return 10
-				;;
-			53)
-				return 11
-				;;
-			59)
-				echo "Bad request: $meta" >&2
-				return 12
-				;;
-			60)
-				printf "client certificate required, to create a client cert use the following command:\n\n"
-				printf "\topenssl req -x509 -newkey rsa:4096 -keyout %s/%s.key -out %s/%s.crt -days 36500 -nodes\n\n" "$certdir" "$2" "$certdir" "$2"
-				printf "press 'return' to reload the page or 'b' to go back to the previous page:\n"
-				read -r in <&1
-				if [ "$in" = "b" ]
-				then
-					url="$(getprevious)"
-					
-					# word splitting here is intentional
-					# shellcheck disable=SC2086
-					fetch $url
-				else
-					fetch "$1" "$2" "$3" "$4" "$5"
-				fi
-				return 0
-				;;
-			61)
-				return 14
-				;;
-			62)
-				return 15
-				;;
-		esac
-
-		# Success
-		[ -f "$linksfile" ] && rm "$linksfile"
-
-		# Set charset
-		charset="$(echo "$meta" | grep -i "charset=" | sed -e 's/.*charset=\([^;]\+\).*/\1/Ig')"
-		case "$charset" in
-			"iso-8859-1" | "ISO-8859-1") charset="iso8859" ;;
-			"utf-8" | "UTF-8" | "") charset="utf8" ;;
-			"us-ascii" | "US-ASCII") charset="ascii" ;;
-		esac
-		debug "charset: $charset"
-
-		i=1
-		while IFS='' read -r line
-		do
-			line="$(echo "$line" | tr -d '\r')"
-			# shellcheck disable=SC2016
-			echo "$line" | grep -q '```' && pre=$((1 - pre)) && line=""
-
-			# Add margins and fold
-			if [ "$pre" = 1 ]
+			url="$proto://$host:$port/$path"
+			return 0
+			;;
+		40)
+			echo "Temporary failure" >&2
+			return 3
+			;;
+		41)
+			return 4
+			;;
+		42)
+			return 5
+			;;
+		43)
+			return 6
+			;;
+		44)
+			return 7
+			;;
+		51*)
+			echo "Page not found!" >&2
+			read -r proto host port path << EOF
+				$(getprevious)
+EOF
+			url="$proto://$host:$port/$path"
+			debug "previous page: $url"
+			return 0
+			;;
+		52)
+			return 10
+			;;
+		53)
+			return 11
+			;;
+		59)
+			echo "Bad request: $meta" >&2
+			return 12
+			;;
+		60)
+			printf "client certificate required, to create a client cert use the following command:\n\n"
+			printf "\topenssl req -x509 -newkey rsa:4096 -keyout %s/%s.key -out %s/%s.crt -days 36500 -nodes\n\n" "$certdir" "$2" "$certdir" "$2"
+			printf "press 'return' to reload the page or 'b' to go back to the previous page:\n"
+			read -r in <&1
+			if [ "$in" = "b" ]
 			then
-				printf '%*s%s\n' "$margin" "" "$line"
-			else
-				case "$line" in
-					"### "*) sty="$sty_header3" && line="$(echo "$line" | cut -c 5- )" ;;
-					"## "*) sty="$sty_header2" && line="$(echo "$line" | cut -c 4-)" ;;
-					"# "*) sty="$sty_header1" && line="$(echo "$line" | cut -c 3-)" ;;
-					"> "*) sty="  $sty_quote" && line="$(echo "$line" | cut -c 3-)" ;;
-					"=>"*)
-						link="$(echo "$line" | sed -e 's/^=> *\(\S\+\)\(\s*.*\)/\1 \2/g')"
-						echo "$link" >> "$linksfile"
-
-						# shellcheck disable=SC2086
-						line="$(echo $link | cut -d' ' -f2-)"
-						[ -z "$line" ] && line="$link"
-						sty="$sty_linkt"
-						line="$sty_linkb=>$sty_linkt $line"
-						;;
-					'* '*) sty="" && line=" $sty_listb•$sty_listt$(echo "$line" | cut -c 2-)";;
-					*) sty="";;
-				esac
-				echo "$line" | fold -w $width -s | {
-					while IFS='' read -r txt
-					do
-						printf "%*s" "$margin" ""
-						# shellcheck disable=SC2059
-						printf -- "$sty$txt\\n"
-					done
-				}
-			fi
-		done | LESSCHARSET="$charset" less -k "$LESSKEY" +k -R
-		code="$?"
-
-		# Choose what to do next
-		debug "pager exit code: $code"
-		case "$code" in
-			0) exit 0 ;;
-			49)
-				# Open url
-				printf "Type url: "
-				read -r url <&1
-				debug "new url: $url"
-				set --
-				;;
-			50) url="$1://$2:$3/$4" ;;
-			51)
-				# Follow link
-				cat -n "$linksfile"
-				printf "Enter link number: "
-				read -r i <&1
-				url="$(sed "${i}q;d" "$linksfile" | cut -d' ' -f1)"
-				;;
-			52) 
-				# shellcheck disable=SC2046
-				fetch $(getprevious)
-			       	return
-				;;
-			53) url="$homepage"; shift $# ;;
-			54) 
-				echo "Enter description: (optional)"
-				read -r desc <&1
-				url="$1://$2:$3/$4"
-				echo "$url $desc" >> "$bookmarkfile"
-				;;
-			55)
-				cat -n "$bookmarkfile"
-				printf "Enter link number: "
-				read -r i <&1
-				url="$(sed "${i}q;d" "$bookmarkfile" | cut -d' ' -f1)"
-		esac
-
-		read -r proto host port path << EOF
-$(oldhost="$2" oldpath="$4" parseurl "$url")
+				read -r proto host port path << EOF
+					$(getprevious)
 EOF
-		if [ ! "$proto" = "gemini" ]
-		then
-			echo "Only gemini links are supported."
-			echo "Type a key to continue."
-			read -r i <&1
-			proto="$1"; host="$2"; port="$3"; path="$4"
-		fi
+				url="$proto://$host:$port/$path"
+			else
+				url="$1://$2:$3/$4?$5"
+			fi
+			return 0
+			;;
+		61)
+			return 14
+			;;
+		62)
+			return 15
+			;;
+	esac
 
-		fetch "$proto" "$host" "$port" "$path"
-	}
+	# Success
+	[ -f "$linksfile" ] && rm "$linksfile"
+
+	# Set charset
+	charset="$(echo "$meta" | grep -i "charset=" | sed -e 's/.*charset=\([^;]\+\).*/\1/Ig')"
+	case "$charset" in
+		"iso-8859-1" | "ISO-8859-1") charset="iso8859" ;;
+		"utf-8" | "UTF-8" | "") charset="utf8" ;;
+		"us-ascii" | "US-ASCII") charset="ascii" ;;
+	esac
+	debug "charset: $charset"
+
+	case $4 in
+		*".gmi"|"") typesetgmi ;;
+		*) cat ;;
+	esac < "$cachedir/curpage" | LESSCHARSET="$charset" less -k "$LESSKEY" +k -R
+	code="$?"
+	rm "$cachedir/curpage"
+
+	# Choose what to do next
+	debug "pager exit code: $code"
+	case "$code" in
+		0) exit 0 ;;
+		49)
+			# Open url
+			printf "Type url: "
+			read -r url <&1
+			;;
+		50) url="$1://$2:$3/$4" ;;
+		51)
+			# Follow link
+			cat -n "$linksfile"
+			printf "Enter link number: "
+			read -r i <&1
+			debug "selected $i"
+			url="$(sed "${i}q;d" "$linksfile" | cut -d' ' -f1)"
+			oldhost="$2"; oldpath="$4"
+			;;
+		52) 
+			read -r proto host port path << EOF
+				$(getprevious)
+EOF
+			url="$proto://$host:$port/$path"
+			;;
+		53) url="$homepage"; shift $# ;;
+		54) 
+			echo "Enter description: (optional)"
+			read -r desc <&1
+			url="$1://$2:$3/$4"
+			echo "$url $desc" >> "$bookmarkfile"
+			;;
+		55)
+			cat -n "$bookmarkfile"
+			printf "Enter link number: "
+			read -r i <&1
+			url="$(sed "${i}q;d" "$bookmarkfile" | cut -d' ' -f1)"
+	esac
+
+	debug "new url: $url"
 }
 
 # Execution
@@ -405,9 +417,12 @@ sty_linkt="\\033[${sty_linkt}m"
 sty_listb="\\033[${sty_listb}m"
 sty_listt="\\033[${sty_listt}m"
 
-# shellcheck disable=SC2031
-debug "starting with ${args:-$homepage} margin: $margin"
-
 # First request
-# shellcheck disable=SC2046
-fetch $(parseurl "${args:-$homepage}")
+url="${args:-$homepage}"
+
+while :
+do
+	# shellcheck disable=SC2086
+	fetch $(parseurl)
+done
+
