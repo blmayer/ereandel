@@ -3,5 +3,5 @@
 PREFIX ?= ~/.local
 
 install:
-	install -m +x astro -d $(PREFIX)/bin
+	install -m +rx astro -t $(PREFIX)/bin/
 
