@@ -1,15 +1,15 @@
 # astro
 
-> A Gemini web browser using shell script
-
 ![print](https://github.com/blmayer/astro/blob/main/astro.png?raw=true)
+> A Gemini web browser using shell script
 
 
 ## Installing
 
 There is an AUR package for archlinux users:
 
-[![astro](https://img.shields.io/aur/version/astro)](https://aur.archlinux.org/packages/astro)
+[![astro](https://img.shields.io/aur/version/astro?label=astro&logo=arch-linux)](https://aur.archlinux.org/packages/astro)
+[![astro-git](https://img.shields.io/aur/version/astro-git?label=astro-git&logo=arch-linux)](https://aur.archlinux.org/packages/astro-git)
 
 You can also move the file *astro* to a folder in your PATH variable, 
 or run `make install`, by default it will be installed into *~/.local/bin*.
@@ -102,3 +102,8 @@ Please read the [contributing file](CONTRIBUTING.md).
 - [gmi](https://sr.ht/~chambln/gmi/)
 - [bollux](https://sr.ht/~acdw/bollux/)
 
+
+### Packaging
+
+I'm not the maintainer of the AUR packages for this project,
+thanks [guzzisti](https://aur.archlinux.org/account/guzzisti) for the contribution.
