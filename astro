@@ -277,7 +277,8 @@ EOF
 
 	case $4 in
 		*".gmi"|"") typesetgmi ;;
-		*) cat ;;
+		*.*) cat ;;
+		*) typesetgmi ;;
 	esac < "$cachedir/curpage" | LESSCHARSET="$charset" less -k "$LESSKEY" +k -R
 	code="$?"
 	rm "$cachedir/curpage"
@@ -348,41 +349,15 @@ confighome=${XDG_CONFIG_HOME:-$HOME/.config}
 mkdir -p "$confighome/astro"
 configfile="$confighome/astro/astro.conf"
 bookmarkfile="$confighome/astro/bookmarks"
+LESSKEY="$confighome/astro/less.keys"
 certdir="$confighome/astro/certs"
 mkdir -p "$certdir"
-
-# Configuration step
-if [ -e "$configfile" ]
-then
-	cachehome="$(grep cachehome "$configfile" | cut -d '=' -f 2,3)"
-	margin="$(grep margin "$configfile" | cut -d '=' -f 2,3)"
-	homepage="$(grep homepage "$configfile" | cut -d '=' -f 2,3)"
-	sty_header1="$(grep style-header1 "$configfile" | cut -d '=' -f 2-)"
-	sty_header2="$(grep style-header2 "$configfile" | cut -d '=' -f 2-)"
-	sty_header3="$(grep style-header3 "$configfile" | cut -d '=' -f 2-)"
-	sty_quote="$(grep style-quote "$configfile" | cut -d '=' -f 2-)"
-	sty_linkb="$(grep style-link-bullet "$configfile" | cut -d '=' -f 2-)"
-	sty_linkt="$(grep style-link-text "$configfile" | cut -d '=' -f 2-)"
-	sty_listb="$(grep style-list-bullet "$configfile" | cut -d '=' -f 2-)"
-	sty_listt="$(grep style-list-text "$configfile" | cut -d '=' -f 2-)"
-fi
 
 [ -z "$cachehome" ] && cachehome=${XDG_CACHE_HOME:-$HOME/.cache}
 cachedir="$cachehome/astro"
 mkdir -p "$cachedir"
 histfile="$cachedir/history"
 linksfile="$cachedir/links"
-
-# move old bookmark file to new location
-if [ -f "$cachedir/bookmarks" ] && [ ! -f "$bookmarkfile" ]
-then
-	mv "$cachedir/bookmarks" "$bookmarkfile"
-fi
-
-LESSKEY="$confighome/astro/less.keys"
-
-# Restore terminal
-trap 'tput rmcup && rm $histfile $linksfile 2&> /dev/null; exit' EXIT INT HUP
 
 # This is the final binary form, to save space, it corresponds to:
 # o (49): go to a URL
@@ -395,17 +370,28 @@ trap 'tput rmcup && rm $histfile $linksfile 2&> /dev/null; exit' EXIT INT HUP
 [ -n "$LESSKEY" ] && echo "AE0rR2MjAG8AmDEAcgCYMgBnAJgzAGIAmDQASACYNQBtAJg2AE0AmDcAZQAAdgAAeEVuZA==" | \
 	base64 -d  > "$LESSKEY"
 
-# Default values
-[ -z "$margin" ] && margin=8
-[ -z "$homepage" ] && homepage="gemini.circumlunar.space/"
-[ -z "$sty_header1" ] && sty_header1='35;4;1'
-[ -z "$sty_header2" ] && sty_header2='35;4'
-[ -z "$sty_header3" ] && sty_header3='35;1'
-[ -z "$sty_quote" ] && sty_quote='2;3'
-[ -z "$sty_linkb" ] && sty_linkb='35'
-[ -z "$sty_linkt" ] && sty_linkt='36;3'
-[ -z "$sty_listb" ] && sty_listb='35;1'
-[ -z "$sty_listt" ] && sty_listt='0'
+if [ ! -s "$configfile" ]
+then
+	# Default values
+	cat << EOF > "$configfile"
+cachehome="$cachehome"
+margin=8
+homepage="gemini.circumlunar.space/"
+sty_header1='35;7;1'
+sty_header2='35;4;1'
+sty_header3='35;4'
+sty_quote='2;3'
+sty_linkb='35'
+sty_linkt='36;3'
+sty_listb='35;1'
+sty_listt='0'
+EOF
+fi
+
+source "$configfile"
+
+# Restore terminal
+trap 'tput rmcup && rm $histfile $linksfile 2&> /dev/null; exit' EXIT INT HUP
 
 # ANSI style code
 sty_header1="\\033[${sty_header1}m"
