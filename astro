@@ -45,6 +45,68 @@ version() {
 	echo "Written by Brian Lee Mayer."
 }
 
+# Save terminal
+tput smcup
+
+# Configuration
+confighome=${XDG_CONFIG_HOME:-$HOME/.config}
+mkdir -p "$confighome/astro"
+configfile="$confighome/astro/astro.conf"
+bookmarkfile="$confighome/astro/bookmarks"
+LESSKEY="$confighome/astro/less.keys"
+certdir="$confighome/astro/certs"
+mkdir -p "$certdir"
+
+[ -z "$cachehome" ] && cachehome=${XDG_CACHE_HOME:-$HOME/.cache}
+cachedir="$cachehome/astro"
+mkdir -p "$cachedir"
+histfile="$cachedir/history"
+linksfile="$cachedir/links"
+
+# This is the final binary form, to save space, it corresponds to:
+# o (49): go to a URL
+# r (50): reload page
+# g (51): go to a link
+# b (52): go back
+# H (53): go to homepage
+# m (54): add page to bookmarks
+# M (55): go to a bookmark
+[ -n "$LESSKEY" ] && echo "AE0rR2MjAG8AmDEAcgCYMgBnAJgzAGIAmDQASACYNQBtAJg2AE0AmDcAZQAAdgAAeEVuZA==" | \
+	base64 -d  > "$LESSKEY"
+
+if [ ! -s "$configfile" ]
+then
+	# Default values
+	cat << EOF > "$configfile"
+cachehome="$cachehome"
+margin=8
+homepage="gemini.circumlunar.space/"
+sty_header1='35;7;1'
+sty_header2='35;4;1'
+sty_header3='35;4'
+sty_quote='2;3'
+sty_linkb='35'
+sty_linkt='36;3'
+sty_listb='35;1'
+sty_listt='0'
+EOF
+fi
+
+. "$configfile"
+
+# Restore terminal
+trap 'tput rmcup && rm $histfile $linksfile 2&> /dev/null; exit' EXIT INT HUP
+
+# ANSI style code
+sty_header1="\\033[${sty_header1}m"
+sty_header2="\\033[${sty_header2}m"
+sty_header3="\\033[${sty_header3}m"
+sty_quote="\\033[${sty_quote}m"
+sty_linkb="\\033[${sty_linkb}m"
+sty_linkt="\\033[${sty_linkt}m"
+sty_listb="\\033[${sty_listb}m"
+sty_listt="\\033[${sty_listt}m"
+
 debug() {
 	[ "$debug" ] && echo "DEBUG: $*" >&2 && sleep 2
 }
@@ -341,67 +403,6 @@ case "$args" in
 		;;
 esac
 
-# Save terminal
-tput smcup
-
-# Configuration
-confighome=${XDG_CONFIG_HOME:-$HOME/.config}
-mkdir -p "$confighome/astro"
-configfile="$confighome/astro/astro.conf"
-bookmarkfile="$confighome/astro/bookmarks"
-LESSKEY="$confighome/astro/less.keys"
-certdir="$confighome/astro/certs"
-mkdir -p "$certdir"
-
-[ -z "$cachehome" ] && cachehome=${XDG_CACHE_HOME:-$HOME/.cache}
-cachedir="$cachehome/astro"
-mkdir -p "$cachedir"
-histfile="$cachedir/history"
-linksfile="$cachedir/links"
-
-# This is the final binary form, to save space, it corresponds to:
-# o (49): go to a URL
-# r (50): reload page
-# g (51): go to a link
-# b (52): go back
-# H (53): go to homepage
-# m (54): add page to bookmarks
-# M (55): go to a bookmark
-[ -n "$LESSKEY" ] && echo "AE0rR2MjAG8AmDEAcgCYMgBnAJgzAGIAmDQASACYNQBtAJg2AE0AmDcAZQAAdgAAeEVuZA==" | \
-	base64 -d  > "$LESSKEY"
-
-if [ ! -s "$configfile" ]
-then
-	# Default values
-	cat << EOF > "$configfile"
-cachehome="$cachehome"
-margin=8
-homepage="gemini.circumlunar.space/"
-sty_header1='35;7;1'
-sty_header2='35;4;1'
-sty_header3='35;4'
-sty_quote='2;3'
-sty_linkb='35'
-sty_linkt='36;3'
-sty_listb='35;1'
-sty_listt='0'
-EOF
-fi
-
-source "$configfile"
-
-# Restore terminal
-trap 'tput rmcup && rm $histfile $linksfile 2&> /dev/null; exit' EXIT INT HUP
-
-# ANSI style code
-sty_header1="\\033[${sty_header1}m"
-sty_header2="\\033[${sty_header2}m"
-sty_header3="\\033[${sty_header3}m"
-sty_quote="\\033[${sty_quote}m"
-sty_linkb="\\033[${sty_linkb}m"
-sty_linkt="\\033[${sty_linkt}m"
-sty_listb="\\033[${sty_listb}m"
-sty_listt="\\033[${sty_listt}m"
 
 # First request
 url="${args:-$homepage}"
