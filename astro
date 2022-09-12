@@ -95,7 +95,7 @@ fi
 . "$configfile"
 
 # Restore terminal
-trap 'tput rmcup && rm $histfile $linksfile 2&> /dev/null; exit' EXIT INT HUP
+trap 'tput rmcup && rm -f $histfile $linksfile > /dev/null 2>&1; exit' EXIT INT HUP
 
 # ANSI style code
 sty_header1="\\033[${sty_header1}m"
