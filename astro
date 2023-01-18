@@ -45,6 +45,10 @@ version() {
 	echo "Written by Brian Lee Mayer."
 }
 
+debug() {
+	[ "$debug" ] && echo "DEBUG: $*" >&2 && sleep 2
+}
+
 # Save terminal
 tput smcup
 
@@ -59,9 +63,6 @@ mkdir -p "$certdir"
 
 [ -z "$cachehome" ] && cachehome=${XDG_CACHE_HOME:-$HOME/.cache}
 cachedir="$cachehome/astro"
-mkdir -p "$cachedir"
-histfile="$cachedir/history"
-linksfile="$cachedir/links"
 
 # This is the final binary form, to save space, it corresponds to:
 # o (49): go to a URL
@@ -78,7 +79,7 @@ if [ ! -s "$configfile" ]
 then
 	# Default values
 	cat << EOF > "$configfile"
-cachehome="$cachehome"
+cachedir="$cachehome"
 margin=8
 homepage="gemini.circumlunar.space/"
 sty_header1='35;7;1'
@@ -94,6 +95,10 @@ fi
 
 . "$configfile"
 
+mkdir -p "$cachedir"
+histfile="$cachedir/history"
+linksfile="$cachedir/links"
+
 # Restore terminal
 trap 'tput rmcup && rm -f $histfile $linksfile > /dev/null 2>&1; exit' EXIT INT HUP
 
@@ -106,10 +111,6 @@ sty_linkb="\\033[${sty_linkb}m"
 sty_linkt="\\033[${sty_linkt}m"
 sty_listb="\\033[${sty_listb}m"
 sty_listt="\\033[${sty_listt}m"
-
-debug() {
-	[ "$debug" ] && echo "DEBUG: $*" >&2 && sleep 2
-}
 
 getprevious() {
 	sed -i '$d' "$histfile"
