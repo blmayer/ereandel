@@ -262,7 +262,7 @@ EOF
 
 			# shellcheck disable=SC2046
 			read -r proto host port path << EOF
-				$(oldhost="$2" oldpath="$4" parseurl "$meta")
+				$(oldhost="$2" oldpath="$4" url="$meta" parseurl)
 EOF
 			url="$proto://$host:$port/$path"
 			return 0
