@@ -1,14 +1,13 @@
 #!/bin/sh
 
 usage() {
-	echo "Astro v0.16.0: Browse the gemini web on the terminal."
+	echo "Astro v0.18.0: Browse the gemini web on the terminal."
 	echo ""
 	echo "Usage: astro [url]|[option]"
 	echo ""
 	echo "Options:"
-	echo "  -h		show this help"
-	echo "  --help	show this help"
-	echo "  --version	show version info"
+	echo "  -h, --help		show this help"
+	echo "  -v, --version		show version info"
 	echo ""
 	echo "Commands available inside the browser:"
 	echo "  q	quit"
@@ -32,11 +31,12 @@ usage() {
 	echo "Report bugs to: bleemayer@gmail.com"
 	echo "Home page: <https://www.github.com/blmayer/astro/>"
 	echo "General help: <https://www.github.com/blmayer/astro/wiki>"
+	exit
 }
 
 version() {
-	echo "astro 0.16.0"
-	echo "Copyright (C) 2021 Brian Mayer."
+	echo "astro 0.18.0"
+	echo "Copyright (C) 2021-2023 Brian Mayer."
 	echo "License MIT: MIT License <https://opensource.org/licenses/MIT>"
 	echo "THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND,"
 	echo "EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF"
@@ -48,6 +48,19 @@ version() {
 debug() {
 	[ "$debug" ] && echo "DEBUG: $*" >&2 && sleep 2
 }
+
+# Parse arguments
+args="$*"
+case "$args" in
+	'--help'* | '-h'*)
+		usage
+		exit
+		;;
+	'--version'* | '-v'*)
+		version
+		exit
+		;;
+esac
 
 # Save terminal
 tput smcup
@@ -390,20 +403,6 @@ EOF
 
 # Execution
 export LESS='-P Keys\: qgrbosHmM, to see a description run astro -h'
-
-# Parse arguments
-args="$*"
-case "$args" in
-	'--help'* | '-h'*)
-		usage
-		exit
-		;;
-	'--version'*)
-		version
-		exit
-		;;
-esac
-
 
 # First request
 url="${args:-$homepage}"
