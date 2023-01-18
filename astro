@@ -19,6 +19,7 @@ usage() {
 	echo "  H	go to homepage"
 	echo "  m	add bookmark"
 	echo "  M	go to a bookmark"
+	echo "  K	remove bookmark for current url"
 	echo ""
 	echo "Examples:"
 	echo "  astro		Start browsing the default webpage"
@@ -85,7 +86,8 @@ cachedir="$cachehome/astro"
 # H (53): go to homepage
 # m (54): add page to bookmarks
 # M (55): go to a bookmark
-[ -n "$LESSKEY" ] && echo "AE0rR2MjAG8AmDEAcgCYMgBnAJgzAGIAmDQASACYNQBtAJg2AE0AmDcAZQAAdgAAeEVuZA==" | \
+# K (56): remove bookmark for current url
+[ -n "$LESSKEY" ] && echo "AE0rR2MoAG8AmDEAcgCYMgBnAJgzAGIAmDQASACYNQBtAJg2AE0AmDcASwCYOABlAAB2AAB4RW5k" | \
 	base64 -d  > "$LESSKEY"
 
 if [ ! -s "$configfile" ]
@@ -396,13 +398,19 @@ EOF
 			printf "Enter link number: "
 			read -r i <&1
 			url="$(sed "${i}q;d" "$bookmarkfile" | cut -d' ' -f1)"
+			;;
+		56)
+			url="$1://$2:$3/$4"
+			cat "$bookmarkfile" | grep -iv "^$url " > "$cachedir/bookmarks"
+			mv "$cachedir/bookmarks" "$bookmarkfile"
+			;;
 	esac
 
 	debug "new url: $url"
 }
 
 # Execution
-export LESS='-P Keys\: qgrbosHmM, to see a description run astro -h'
+export LESS='-P Keys\: qgrbosHmMK, to see a description run astro -h'
 
 # First request
 url="${args:-$homepage}"
