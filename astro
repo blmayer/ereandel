@@ -35,7 +35,6 @@ usage() {
 	echo "Report bugs to: bleemayer@gmail.com"
 	echo "Home page: <https://www.github.com/blmayer/astro/>"
 	echo "General help: <https://www.github.com/blmayer/astro/wiki>"
-	exit
 }
 
 version() {
@@ -94,6 +93,7 @@ cachedir="$cachehome/astro"
 [ -n "$LESSKEY" ] && echo "AE0rR2MtAG8AmDEAcgCYMgBnAJgzAGIAmDQASACYNQBtAJg2AE0AmDcASwCYOAB1AJg5AGUAAHYAAHhFbmQ=" | \
 	base64 -d  > "$LESSKEY"
 
+margin=8
 if [ ! -s "$configfile" ]
 then
 	# Default values
@@ -112,6 +112,8 @@ sty_listt='0'
 EOF
 fi
 
+
+# shellcheck disable=SC1090
 . "$configfile"
 
 mkdir -p "$cachedir"
@@ -405,7 +407,7 @@ EOF
 			;;
 		56)
 			url="$1://$2:$3/$4"
-			cat "$bookmarkfile" | grep -iv "^$url " > "$cachedir/bookmarks"
+			grep -iv "^$url " "$bookmarkfile" > "$cachedir/bookmarks"
 			mv "$cachedir/bookmarks" "$bookmarkfile"
 			;;
 		57)
