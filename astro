@@ -411,8 +411,8 @@ EOF
 			mv "$cachedir/bookmarks" "$bookmarkfile"
 			;;
 		57)
-			newpath=$(echo "/$4" | rev | cut -d'/' -f2- | rev)
-			url="$1://$2:$3/$newpath"
+			newpath=$(echo "/$4" | tr -d '/' | rev | cut -d'/' -f2- | rev)
+			url="$1://$2:$3$newpath"
 			;;
 	esac
 
