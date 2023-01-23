@@ -1,7 +1,9 @@
 #!/bin/sh
 
+version="0.19.0"
+
 usage() {
-	echo "Astro v0.18.0: Browse the gemini web on the terminal."
+	echo "astro v$version: Browse the gemini web on the terminal."
 	echo ""
 	echo "Usage: astro [url]|[option]"
 	echo ""
@@ -14,6 +16,7 @@ usage() {
 	echo "  g	go to a link"
 	echo "  r	reload current page"
 	echo "  b	go back one page"
+	echo "  u	jump one path segment up"
 	echo "  o	open an address"
 	echo "  s	save current page"
 	echo "  H	go to homepage"
@@ -32,11 +35,10 @@ usage() {
 	echo "Report bugs to: bleemayer@gmail.com"
 	echo "Home page: <https://www.github.com/blmayer/astro/>"
 	echo "General help: <https://www.github.com/blmayer/astro/wiki>"
-	exit
 }
 
 version() {
-	echo "astro 0.18.0"
+	echo "astro $version"
 	echo "Copyright (C) 2021-2023 Brian Mayer."
 	echo "License MIT: MIT License <https://opensource.org/licenses/MIT>"
 	echo "THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND,"
@@ -87,9 +89,11 @@ cachedir="$cachehome/astro"
 # m (54): add page to bookmarks
 # M (55): go to a bookmark
 # K (56): remove bookmark for current url
-[ -n "$LESSKEY" ] && echo "AE0rR2MoAG8AmDEAcgCYMgBnAJgzAGIAmDQASACYNQBtAJg2AE0AmDcASwCYOABlAAB2AAB4RW5k" | \
+# u (57): jump one path element up
+[ -n "$LESSKEY" ] && echo "AE0rR2MtAG8AmDEAcgCYMgBnAJgzAGIAmDQASACYNQBtAJg2AE0AmDcASwCYOAB1AJg5AGUAAHYAAHhFbmQ=" | \
 	base64 -d  > "$LESSKEY"
 
+margin=8
 if [ ! -s "$configfile" ]
 then
 	# Default values
@@ -108,6 +112,8 @@ sty_listt='0'
 EOF
 fi
 
+
+# shellcheck disable=SC1090
 . "$configfile"
 
 mkdir -p "$cachedir"
@@ -401,8 +407,12 @@ EOF
 			;;
 		56)
 			url="$1://$2:$3/$4"
-			cat "$bookmarkfile" | grep -iv "^$url " > "$cachedir/bookmarks"
+			grep -iv "^$url " "$bookmarkfile" > "$cachedir/bookmarks"
 			mv "$cachedir/bookmarks" "$bookmarkfile"
+			;;
+		57)
+			newpath=$(echo "/$4" | rev | cut -d'/' -f2- | rev)
+			url="$1://$2:$3/$newpath"
 			;;
 	esac
 
@@ -410,7 +420,7 @@ EOF
 }
 
 # Execution
-export LESS='-P Keys\: qgrbosHmMK, to see a description run astro -h'
+export LESS='-P Keys\: qgrubosHmMK, to see a description run astro -h'
 
 # First request
 url="${args:-$homepage}"

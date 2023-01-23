@@ -45,6 +45,7 @@ To remove a certificate simply delete the `<domain>.crt` and `<domain>.key` file
 ### Key bindings
 
 - `b` to go back one page
+- `u` go one path segment up
 - `o` to open a new URL, you'll be prompted to type it
 - `r` to reload the page
 - `H` to go to the home page
@@ -52,6 +53,7 @@ To remove a certificate simply delete the `<domain>.crt` and `<domain>.key` file
 - `s` to save the page to a file
 - `m` to add the current page to bookmarks
 - `M` to go to a bookmark
+- `K` to delete the bookmark of the current page
 - `q` to quit
 
 More coming.
