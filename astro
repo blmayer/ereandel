@@ -177,7 +177,7 @@ typesetgmi() {
 	do
 		line="$(echo "$line" | tr -d '\r')"
 		# shellcheck disable=SC2016
-		echo "$line" | grep -q '```' && pre=$((1 - pre)) && line=""
+		echo "$line" | grep -q '^```' && pre=$((1 - pre)) && line=""
 
 		# Add margins and fold
 		if [ "$pre" = 1 ]
