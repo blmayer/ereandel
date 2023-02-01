@@ -204,7 +204,7 @@ typesetgmi() {
 			'* '*) sty="" && line=" $sty_listb•$sty_listt$(echo "$line" | cut -c 2-)";;
 			*) sty="";;
 		esac
-		echo ${line//%/%%} | fold -w "$width" -s | {
+		echo "$line" | sed 's/%/%%/g' | fold -w "$width" -s | {
 			while IFS='' read -r txt
 			do
 				printf "%*s" "$margin" ""
