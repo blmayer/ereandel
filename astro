@@ -1,6 +1,6 @@
 #!/bin/sh
 
-version="0.19.0"
+version="0.20.0"
 
 usage() {
 	echo "astro v$version: Browse the gemini web on the terminal."
@@ -215,6 +215,30 @@ typesetgmi() {
 	done
 }
 
+# borrowed from https://gist.github.com/cdown/1163649
+urlencode() {
+	old_lang=$LANG
+	LANG=C
+
+	old_lc_collate=$LC_COLLATE
+	LC_COLLATE=C
+
+	length="${#1}"
+	i=1
+	while [ "$i" -le "$length" ]
+	do
+		c=$(printf '%s' "$1" | cut -c $i)
+		case $c in
+			[a-zA-Z0-9.~_-]) printf '%s' "$c" ;;
+			*) printf '%%%02X' "'$c" ;;
+		esac
+		i=$((i+1))
+	done
+
+	LC_COLLATE=$old_lc_collate
+	LANG=$old_lang
+}
+
 # Fetches the gemini response from server
 # Parameters: proto, host, port and path
 # Spec draft is here: https://gemini.circumlunar.space/docs/specification.html
@@ -268,13 +292,13 @@ EOF
 			echo "Input needed: $meta" >&2
 			echo "Please provide the input:" >&2
 			read -r input <&1
-			url="$1://$2:$3/$4?$input"
+			url="$1://$2:$3/$4?$(urlencode "$input")"
 			return 0
 			;;
 		11)
 			echo "Sensitive input needed: $meta" >&2
 			read -r input <&1
-			url="$1://$2:$3/$4?$input"
+			url="$1://$2:$3/$4?$(urlencode "$input")"
 			return 0
 			;;
 		31|32)
