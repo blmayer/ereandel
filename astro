@@ -117,8 +117,9 @@ fi
 . "$configfile"
 
 mkdir -p "$cachedir"
-histfile="$cachedir/history"
-linksfile="$cachedir/links"
+pagefile="$(mktemp -p "$cachedir" -t curpage.XXXXXX)"
+histfile="$(mktemp -p "$cachedir" -t history.XXXXXX)"
+linksfile="$(mktemp -p "$cachedir" -t links.XXXXXX)"
 
 # Restore terminal
 trap 'tput rmcup && rm -f $histfile $linksfile > /dev/null 2>&1; exit' EXIT INT HUP
@@ -277,13 +278,13 @@ EOF
 
 	echo "$1://$2:$3/$4$5" | eval openssl s_client \
 		-connect "$2:$3" "$certfile" -crlf -quiet \
-		-ign_eof 2> /dev/null > "$cachedir/curpage"
+		-ign_eof 2> /dev/null > "$pagefile"
 
 	# First line is status and meta information
-	read -r status meta < "$cachedir/curpage"
+	read -r status meta < "$pagefile"
 	status="$(echo "$status" | tr -d '\r\n')"
 	meta="$(echo "$meta" | tr -d '\r\n')"
-	sed -i '1d' "$cachedir/curpage"
+	sed -i '1d' "$pagefile"
 	debug "response header: $status $meta"
 
 	# Validate
@@ -387,9 +388,9 @@ EOF
 		*".gmi"|"") typesetgmi ;;
 		*.*) cat ;;
 		*) typesetgmi ;;
-	esac < "$cachedir/curpage" | LESSCHARSET="$charset" less -k "$LESSKEY" +k -R
+	esac < "$pagefile" | LESSCHARSET="$charset" less -k "$LESSKEY" +k -R
 	code="$?"
-	rm "$cachedir/curpage"
+	rm "$pagefile"
 
 	# Choose what to do next
 	debug "pager exit code: $code"
