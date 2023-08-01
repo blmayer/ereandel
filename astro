@@ -173,7 +173,7 @@ parseurl() {
 }
 
 typesetgmi() {
-	i=1
+	linkcount=1
 	while IFS='' read -r line
 	do
 		line="$(echo "$line" | tr -d '\r')"
@@ -200,7 +200,8 @@ typesetgmi() {
 				line="$(echo $link | cut -d' ' -f2-)"
 				[ -z "$line" ] && line="$link"
 				sty="$sty_linkt"
-				line="$sty_linkb=>$sty_linkt $line"
+				line="$sty_linkb$linkcount>$sty_linkt $line"
+				linkcount=$((linkcount+1))
 				;;
 			'* '*) sty="" && line=" $sty_listb•$sty_listt$(echo "$line" | cut -c 2-)";;
 			*) sty="";;
