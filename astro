@@ -173,7 +173,6 @@ parseurl() {
 }
 
 typesetgmi() {
-	linkcount=1
 	while IFS='' read -r line
 	do
 		line="$(echo "$line" | tr -d '\r')"
@@ -195,13 +194,13 @@ typesetgmi() {
 			"=>"*)
 				link="$(echo "$line" | sed -e 's/^=> *\(\S\+\)\(\s*.*\)/\1 \2/g')"
 				echo "$link" >> "$linksfile"
+				linkcount=$((linkcount+1))
 
 				# shellcheck disable=SC2086
 				line="$(echo $link | cut -d' ' -f2-)"
 				[ -z "$line" ] && line="$link"
 				sty="$sty_linkt"
-				line="$sty_linkb$linkcount>$sty_linkt $line"
-				linkcount=$((linkcount+1))
+				line="$sty_linkb$linkcount =>$sty_linkt $line"
 				;;
 			'* '*) sty="" && line=" $sty_listb•$sty_listt$(echo "$line" | cut -c 2-)";;
 			*) sty="";;
