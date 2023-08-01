@@ -101,14 +101,14 @@ then
 cachedir="$cachehome"
 margin=8
 homepage="gemini.circumlunar.space/"
-sty_header1='35;7;1'
-sty_header2='35;4;1'
-sty_header3='35;4'
-sty_quote='2;3'
-sty_linkb='35'
-sty_linkt='36;3'
-sty_listb='35;1'
-sty_listt='0'
+sty_header1='\\033[35;7;1m'
+sty_header2='\\033[35;4;1m'
+sty_header3='\\033[35;4m'
+sty_quote='\\033[2;3m  '
+sty_linkb='\\033[35m%linkcount =>'
+sty_linkt='\\033[36;3m '
+sty_listb='\\033[35;1m  •'
+sty_listt='\\033[0m'
 EOF
 fi
 
@@ -123,16 +123,6 @@ linksfile="$(mktemp -p "$cachedir" -t links.XXXXXX)"
 
 # Restore terminal
 trap 'tput rmcup && rm -f $histfile $linksfile > /dev/null 2>&1; exit' EXIT INT HUP
-
-# ANSI style code
-sty_header1="\\033[${sty_header1}m"
-sty_header2="\\033[${sty_header2}m"
-sty_header3="\\033[${sty_header3}m"
-sty_quote="\\033[${sty_quote}m"
-sty_linkb="\\033[${sty_linkb}m"
-sty_linkt="\\033[${sty_linkt}m"
-sty_listb="\\033[${sty_listb}m"
-sty_listt="\\033[${sty_listt}m"
 
 getprevious() {
 	sed -i '$d' "$histfile"
@@ -179,7 +169,7 @@ typesetgmi() {
 		# shellcheck disable=SC2016
 		echo "$line" | grep -q '^```' && pre=$((1 - pre)) && line=""
 
-		# Add margins and fold
+		# add margins and fold
 		if [ "$pre" = 1 ]
 		then
 			printf '%*s%s\n' "$margin" "" "$line"
@@ -190,7 +180,7 @@ typesetgmi() {
 			"### "*) sty="$sty_header3" && line="$(echo "$line" | cut -c 5- )" ;;
 			"## "*) sty="$sty_header2" && line="$(echo "$line" | cut -c 4-)" ;;
 			"# "*) sty="$sty_header1" && line="$(echo "$line" | cut -c 3-)" ;;
-			"> "*) sty="  $sty_quote" && line="$(echo "$line" | cut -c 3-)" ;;
+			"> "*) sty="$sty_quote" && line="$(echo "$line" | cut -c 3-)" ;;
 			"=>"*)
 				link="$(echo "$line" | sed -e 's/^=> *\(\S\+\)\(\s*.*\)/\1 \2/g')"
 				echo "$link" >> "$linksfile"
@@ -199,10 +189,12 @@ typesetgmi() {
 				# shellcheck disable=SC2086
 				line="$(echo $link | cut -d' ' -f2-)"
 				[ -z "$line" ] && line="$link"
+
 				sty="$sty_linkt"
-				line="$sty_linkb$linkcount =>$sty_linkt $line"
+				line="$(echo "$sty_linkb$sty_linkt" | sed "s/%linkcount/$linkcount/g")$line"
+				debug "link line: $line"
 				;;
-			'* '*) sty="" && line=" $sty_listb•$sty_listt$(echo "$line" | cut -c 2-)";;
+			'* '*) sty="$sty_listt" && line="$sty_listb$sty_listt$(echo "$line" | cut -c 2-)";;
 			*) sty="";;
 		esac
 		echo "$line" | sed 's/%/%%/g' | fold -w "$width" -s | {
