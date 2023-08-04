@@ -307,6 +307,8 @@ EOF
 			;;
 		40)
 			echo "Temporary failure" >&2
+			echo "Type a key to continue. "
+			read -r i <&1
 			return 3
 			;;
 		41)
@@ -321,8 +323,10 @@ EOF
 		44)
 			return 7
 			;;
-		51*)
+		50|51)
 			echo "Page not found!" >&2
+			echo "Type a key return to previous page."
+			read -r i <&1
 			read -r proto host port path << EOF
 				$(getprevious)
 EOF
@@ -338,6 +342,8 @@ EOF
 			;;
 		59)
 			echo "Bad request: $meta" >&2
+			echo "Type a key to continue."
+			read -r i <&1
 			return 12
 			;;
 		60)
