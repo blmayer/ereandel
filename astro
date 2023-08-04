@@ -376,8 +376,8 @@ EOF
 	esac
 	debug "charset: $charset"
 
-	case $meta in
-		*"text/gemini") typesetgmi ;;
+	case ${meta#[0-9][0-9]" "} in
+		*"text/gemini*"|"$meta") typesetgmi ;;
 		*) cat ;;
 	esac < "$pagefile" | LESSCHARSET="$charset" less -k "$LESSKEY" +k -R
 	code="$?"
