@@ -192,7 +192,7 @@ typesetgmi() {
 
 				sty="$sty_linkt"
 				line="$(echo "$sty_linkb$sty_linkt" | sed "s/%linkcount/$linkcount/g")$line"
-				debug "link line: $line"
+				#debug "link line: $line"
 				;;
 			'* '*) sty="$sty_listt" && line="$sty_listb$sty_listt$(echo "$line" | cut -c 2-)";;
 			*) sty="";;
@@ -277,7 +277,7 @@ EOF
 	status="$(echo "$status" | tr -d '\r\n')"
 	meta="$(echo "$meta" | tr -d '\r\n')"
 	sed -i '1d' "$pagefile"
-	debug "response header: $status $meta"
+	debug "response status - meta: $status - $meta"
 
 	# Validate
 	case "$status" in
@@ -382,10 +382,9 @@ EOF
 	esac
 	debug "charset: $charset"
 
-	case $4 in
-		*".gmi"|"") typesetgmi ;;
-		*.*) cat ;;
-		*) typesetgmi ;;
+	case $meta in
+		"text/gemini"* | "") typesetgmi ;;
+		*) cat ;;
 	esac < "$pagefile" | LESSCHARSET="$charset" less -k "$LESSKEY" +k -R
 	code="$?"
 	rm "$pagefile"
