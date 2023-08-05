@@ -325,7 +325,7 @@ EOF
 			;;
 		50|51)
 			echo "Page not found!" >&2
-			echo "Type a key return to previous page."
+			echo "Type a key to return to previous page."
 			read -r i <&1
 			read -r proto host port path << EOF
 				$(getprevious)
