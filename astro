@@ -163,7 +163,7 @@ parseurl() {
 }
 
 typesetgmi() {
-	while IFS='' read -r line
+	while IFS='' read -r line || [ -n "$line" ];
 	do
 		line="$(echo "$line" | tr -d '\r')"
 		# shellcheck disable=SC2016
