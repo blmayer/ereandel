@@ -49,7 +49,7 @@ version() {
 }
 
 debug() {
-	[ "$debug" ] && echo "DEBUG: $*" >&2 && sleep 2
+	[ "$debug" ] && echo "DEBUG: $*" >&2 && sleep "$debug"
 }
 
 # Parse arguments
@@ -77,8 +77,7 @@ LESSKEY="$confighome/astro/less.keys"
 certdir="$confighome/astro/certs"
 mkdir -p "$certdir"
 
-[ -z "$cachehome" ] && cachehome=${XDG_CACHE_HOME:-$HOME/.cache}
-cachedir="$cachehome/astro"
+cachedir="${XDG_CACHE_HOME:-$HOME/.cache}/astro"
 
 # This is the final binary form, to save space, it corresponds to:
 # o (49): go to a URL
@@ -93,12 +92,11 @@ cachedir="$cachehome/astro"
 [ -n "$LESSKEY" ] && echo "AE0rR2MtAG8AmDEAcgCYMgBnAJgzAGIAmDQASACYNQBtAJg2AE0AmDcASwCYOAB1AJg5AGUAAHYAAHhFbmQ=" | \
 	base64 -d  > "$LESSKEY"
 
-margin=8
 if [ ! -s "$configfile" ]
 then
 	# Default values
 	cat << EOF > "$configfile"
-cachedir="$cachehome"
+cachedir="$cachedir"
 margin=8
 homepage="gemini.circumlunar.space/"
 sty_header1='\\033[35;7;1m'
@@ -122,7 +120,7 @@ histfile="$(mktemp -p "$cachedir" -t history.XXXXXX)"
 linksfile="$(mktemp -p "$cachedir" -t links.XXXXXX)"
 
 # Restore terminal
-trap 'tput rmcup && rm -f $histfile $linksfile > /dev/null 2>&1; exit' EXIT INT HUP
+trap 'tput rmcup && rm -f $histfile $linksfile $pagefile > /dev/null 2>&1; exit' EXIT INT HUP
 
 getprevious() {
 	sed -i '$d' "$histfile"
@@ -197,12 +195,12 @@ typesetgmi() {
 			'* '*) sty="$sty_listt" && line="$sty_listb$sty_listt$(echo "$line" | cut -c 2-)";;
 			*) sty="";;
 		esac
-		echo "$line" | sed 's/%/%%/g' | fold -w "$width" -s | {
+		echo "$line" | fold -w "$width" -s | {
 			while IFS='' read -r txt
 			do
 				printf "%*s" "$margin" ""
 				# shellcheck disable=SC2059
-				printf -- "$sty$txt\\n"
+				echo -e "$sty$txt"
 			done
 		}
 	done
