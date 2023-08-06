@@ -175,10 +175,10 @@ typesetgmi() {
 		fi
 
 		case "$line" in
-			"### "*) sty="$sty_header3" && line="$(echo "$line" | cut -c 5- )" ;;
-			"## "*) sty="$sty_header2" && line="$(echo "$line" | cut -c 4-)" ;;
-			"# "*) sty="$sty_header1" && line="$(echo "$line" | cut -c 3-)" ;;
-			"> "*) sty="$sty_quote" && line="$(echo "$line" | cut -c 3-)" ;;
+			"### "*) sty="$sty_header3" && line="${line#'### '}" ;;
+			"## "*) sty="$sty_header2" && line="${line#'## '}"  ;;
+			"# "*) sty="$sty_header1" && line="${line#'# '}" ;;
+			"> "*) sty="$sty_quote" && line="${line#> }" ;;
 			"=>"*)
 				link="$(echo "$line" | sed -e 's/^=> *\(\S\+\)\(\s*.*\)/\1 \2/g')"
 				echo "$link" >> "$linksfile"
@@ -188,19 +188,17 @@ typesetgmi() {
 				line="$(echo $link | cut -d' ' -f2-)"
 				[ -z "$line" ] && line="$link"
 
-				sty="$sty_linkt"
-				line="$(echo "$sty_linkb$sty_linkt" | sed "s/%linkcount/$linkcount/g")$line"
-				#debug "link line: $line"
+				sty="$(echo "$sty_linkb$sty_linkt" | sed "s/%linkcount/$linkcount/g")"
 				;;
-			'* '*) sty="$sty_listt" && line="$sty_listb$sty_listt$(echo "$line" | cut -c 2-)";;
+			'* '*) sty="$sty_listt" && line="$sty_listb$sty_listt${line#* }";;
 			*) sty="";;
 		esac
 		echo "$line" | fold -w "$width" -s | {
 			while IFS='' read -r txt
 			do
 				printf "%*s" "$margin" ""
-				# shellcheck disable=SC2059
-				echo -e "$sty$txt"
+				printf "$sty"
+				echo "$txt"
 			done
 		}
 	done
