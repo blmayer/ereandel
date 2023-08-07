@@ -69,17 +69,16 @@ The file uses a simple `key=value` style, see the complete example for the defau
 * The `style-` keys must be ANSI style codes.
 
 ```
-cachehome=~/.cache/
 margin=8
-homepage=gemini.circumlunar.space
-style-header1=35;4;1
-style-header2=35;1
-style-header3=35;4
-style-quote=2;3
-style-link-bullet=33
-style-link-text=36;3
-style-list-bullet=35;1
-style-list-text=0
+homepage="gemini.circumlunar.space/"
+sty_header1='\033[35;7;1m'
+sty_header2='\033[35;4;1m'
+sty_header3='\033[35;4m'
+sty_quote='\033[2;3m  '
+sty_linkb='\033[35m%linkcount =>'
+sty_linkt='\033[36;3m '
+sty_listb='\033[35;1m  •'
+sty_listt='\033[0m'
 ```
 
 ## Meta
