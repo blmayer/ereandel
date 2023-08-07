@@ -103,8 +103,8 @@ sty_header1='\\033[35;7;1m'
 sty_header2='\\033[35;4;1m'
 sty_header3='\\033[35;4m'
 sty_quote='\\033[2;3m  '
-sty_linkb='\\033[35m%linkcount =>'
-sty_linkt='\\033[36;3m '
+sty_linkb='\\033[35m'
+sty_linkt=' => \\033[36;3m '
 sty_listb='\\033[35;1m  •'
 sty_listt='\\033[0m'
 EOF
@@ -194,16 +194,15 @@ typesetgmi() {
 			"# "*) sty="$sty_header1" && line="${line#'# '}" ;;
 			"> "*) sty="$sty_quote" && line="${line#> }" ;;
 			"=>"*)
-				#link="$(echo "$line" | sed -e 's/^=> *\(\S\+\)\(\s*.*\)/\1 \2/g')"
-				link=${line#???}
-				echo "$link" >> "$linksfile"
+				link=${line#'=>'}
+				echo "${link#' '}" >> "$linksfile"
 				linkcount=$((linkcount+1))
 
 				# shellcheck disable=SC2086
 				line="$(echo $link | cut -d' ' -f2-)"
 				[ -z "$line" ] && line="$link"
 
-				sty="$(echo "$sty_linkb$sty_linkt" | sed "s/%linkcount/$linkcount/g")"
+				sty="$sty_linkb${linkcount}$sty_linkt"
 				;;
 			'* '*) sty="$sty_listt" && line="$sty_listb$sty_listt${line#* }";;
 			*) sty="";;
@@ -212,6 +211,7 @@ typesetgmi() {
 			while IFS='' read -r txt
 			do
 				printf "%*s" "$margin" ""
+				# shellcheck disable=SC2059
 				printf "$sty"
 				echo "$txt"
 			done
