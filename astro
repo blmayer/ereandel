@@ -103,8 +103,8 @@ sty_header1='\\033[35;7;1m'
 sty_header2='\\033[35;4;1m'
 sty_header3='\\033[35;4m'
 sty_quote='\\033[2;3m  '
-sty_linkb='\\033[35m%linkcount =>'
-sty_linkt='\\033[36;3m '
+sty_linkb='\\033[35m'
+sty_linkt=' => \\033[36;3m '
 sty_listb='\\033[35;1m  •'
 sty_listt='\\033[0m'
 EOF
@@ -118,9 +118,22 @@ mkdir -p "$cachedir"
 pagefile="$(mktemp -p "$cachedir" -t curpage.XXXXXX)"
 histfile="$(mktemp -p "$cachedir" -t history.XXXXXX)"
 linksfile="$(mktemp -p "$cachedir" -t links.XXXXXX)"
+tracefile="$(mktemp -p "$cachedir" -t trace.XXXXXX)"
 
 # Restore terminal
 trap 'tput rmcup && rm -f $histfile $linksfile $pagefile > /dev/null 2>&1; exit' EXIT INT HUP
+
+stop() {
+	[ "$trace" ] || return
+	if [ -z "$stopwatch" ]
+	then
+		stopwatch=$(date +%s.%N)
+	else
+		dur=$(echo "$(date +%s.%N) - $stopwatch" | bc)
+		printf "%s took %s seconds\n" "$1" "$dur" >> "$tracefile"
+		unset stopwatch
+	fi
+}
 
 getprevious() {
 	sed -i '$d' "$histfile"
@@ -161,6 +174,7 @@ parseurl() {
 }
 
 typesetgmi() {
+	stop
 	while IFS='' read -r line || [ -n "$line" ];
 	do
 		line="$(echo "$line" | tr -d '\r')"
@@ -180,15 +194,15 @@ typesetgmi() {
 			"# "*) sty="$sty_header1" && line="${line#'# '}" ;;
 			"> "*) sty="$sty_quote" && line="${line#> }" ;;
 			"=>"*)
-				link="$(echo "$line" | sed -e 's/^=> *\(\S\+\)\(\s*.*\)/\1 \2/g')"
-				echo "$link" >> "$linksfile"
+				link=${line#'=>'}
+				echo "${link#' '}" >> "$linksfile"
 				linkcount=$((linkcount+1))
 
 				# shellcheck disable=SC2086
 				line="$(echo $link | cut -d' ' -f2-)"
 				[ -z "$line" ] && line="$link"
 
-				sty="$(echo "$sty_linkb$sty_linkt" | sed "s/%linkcount/$linkcount/g")"
+				sty="$sty_linkb${linkcount}$sty_linkt"
 				;;
 			'* '*) sty="$sty_listt" && line="$sty_listb$sty_listt${line#* }";;
 			*) sty="";;
@@ -197,15 +211,18 @@ typesetgmi() {
 			while IFS='' read -r txt
 			do
 				printf "%*s" "$margin" ""
+				# shellcheck disable=SC2059
 				printf "$sty"
 				echo "$txt"
 			done
 		}
 	done
+	stop "typeset"
 }
 
 # borrowed from https://gist.github.com/cdown/1163649
 urlencode() {
+	stop
 	old_lang=$LANG
 	LANG=C
 
@@ -226,6 +243,7 @@ urlencode() {
 
 	LC_COLLATE=$old_lc_collate
 	LANG=$old_lang
+	stop "urlencode"
 }
 
 # Fetches the gemini response from server
@@ -264,15 +282,21 @@ EOF
 		debug "using client cert for domain: $certfile"
 	fi
 
+	[ "$trace" ] && echo "url: $1://$2:$3/$4$5" >> "$tracefile"
+
+	stop
 	echo "$1://$2:$3/$4$5" | eval openssl s_client \
 		-connect "$2:$3" "$certfile" -crlf -quiet \
 		-ign_eof 2> /dev/null > "$pagefile"
+	stop "openssl fetch"
 
+	stop
 	# First line is status and meta information
 	read -r status meta < "$pagefile"
 	status="$(echo "$status" | tr -d '\r\n')"
 	meta="$(echo "$meta" | tr -d '\r\n')"
 	sed -i '1d' "$pagefile"
+	stop "status extract"
 	debug "response status - meta: $status - $meta"
 
 	# Validate
