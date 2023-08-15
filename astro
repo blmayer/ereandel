@@ -106,7 +106,7 @@ sty_quote='\\033[2;3m  '
 sty_linkb='\\033[35m'
 sty_linkt=' => \\033[36;3m '
 sty_listb='\\033[35;1m  •'
-sty_listt='\\033[0m'
+sty_listt='\\033[0m '
 EOF
 fi
 
@@ -204,7 +204,7 @@ typesetgmi() {
 
 				sty="$sty_linkb${linkcount}$sty_linkt"
 				;;
-			'* '*) sty="$sty_listt" && line="$sty_listb$sty_listt${line#* }";;
+			'* '*) sty="$sty_listb$sty_listt" && line="${line#* }";;
 			*) sty="";;
 		esac
 		echo "$line" | fold -w "$width" -s | {
