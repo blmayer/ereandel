@@ -106,7 +106,7 @@ sty_quote='\\033[2;3m  '
 sty_linkb='\\033[35m'
 sty_linkt=' => \\033[36;3m '
 sty_listb='\\033[35;1m  •'
-sty_listt='\\033[0m'
+sty_listt='\\033[0m '
 EOF
 fi
 
@@ -204,7 +204,7 @@ typesetgmi() {
 
 				sty="$sty_linkb${linkcount}$sty_linkt"
 				;;
-			'* '*) sty="$sty_listt" && line="$sty_listb$sty_listt${line#* }";;
+			'* '*) sty="$sty_listb$sty_listt" && line="${line#* }";;
 			*) sty="";;
 		esac
 		echo "$line" | fold -w "$width" -s | {
@@ -425,7 +425,7 @@ EOF
 			printf "Enter link number: "
 			read -r i <&1
 			debug "selected $i"
-			url="$(sed "${i}q;d" "$linksfile" | cut -d' ' -f1)"
+			url="$(sed "${i}q;d" "$linksfile" | cut -f1 | cut -d' ' -f1)"
 			oldhost="$2"; oldpath="$4"
 			;;
 		52) 
@@ -453,7 +453,7 @@ EOF
 			mv "$cachedir/bookmarks" "$bookmarkfile"
 			;;
 		57)
-			newpath=$(echo "/$4" | tr -d '/' | rev | cut -d'/' -f2- | rev)
+			newpath=$(echo "/${4%/}" | rev | cut -d'/' -f2- | rev)
 			url="$1://$2:$3$newpath"
 			;;
 	esac
