@@ -425,7 +425,7 @@ EOF
 			printf "Enter link number: "
 			read -r i <&1
 			debug "selected $i"
-			url="$(sed "${i}q;d" "$linksfile" | cut -d' ' -f1)"
+			url="$(sed "${i}q;d" "$linksfile" | cut -f1 | cut -d' ' -f1)"
 			oldhost="$2"; oldpath="$4"
 			;;
 		52) 
