@@ -1,6 +1,6 @@
 #!/bin/sh
 
-version="0.21.0"
+version="0.22.4"
 
 usage() {
 	echo "astro v$version: Browse the gemini web on the terminal."
@@ -282,10 +282,12 @@ EOF
 		debug "using client cert for domain: $certfile"
 	fi
 
-	[ "$trace" ] && echo "url: $1://$2:$3/$4$5" >> "$tracefile"
+	port=$( [ "$3" = "1965" ] || ":$3" )
+	url="$1://$2$port/$4$5"
+	[ "$trace" ] && echo "url: $url" >> "$tracefile"
 
 	stop
-	echo "$1://$2:$3/$4$5" | eval openssl s_client \
+	echo "$url" | eval openssl s_client \
 		-connect "$2:$3" "$certfile" -crlf -quiet \
 		-ign_eof 2> /dev/null > "$pagefile"
 	stop "openssl fetch"
