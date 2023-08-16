@@ -184,10 +184,12 @@ typesetgmi() {
 		# add margins and fold
 		if [ "$pre" = 1 ]
 		then
+			# shellcheck disable=SC2154
 			printf '%*s%s\n' "$margin" "" "$line"
 			continue
 		fi
 
+		# shellcheck disable=SC2154
 		case "$line" in
 			"### "*) sty="$sty_header3" && line="${line#'### '}" ;;
 			"## "*) sty="$sty_header2" && line="${line#'## '}"  ;;
@@ -198,8 +200,7 @@ typesetgmi() {
 				echo "${link#' '}" >> "$linksfile"
 				linkcount=$((linkcount+1))
 
-				# shellcheck disable=SC2086
-				line="$(echo $link | cut -d' ' -f2-)"
+				line="$(echo "$link" | cut -d' ' -f2-)"
 				[ -z "$line" ] && line="$link"
 
 				sty="$sty_linkb${linkcount}$sty_linkt"
