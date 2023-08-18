@@ -1,6 +1,6 @@
 #!/bin/sh
 
-version="0.21.0"
+version="0.22.4"
 
 usage() {
 	echo "astro v$version: Browse the gemini web on the terminal."
@@ -184,10 +184,12 @@ typesetgmi() {
 		# add margins and fold
 		if [ "$pre" = 1 ]
 		then
+			# shellcheck disable=SC2154
 			printf '%*s%s\n' "$margin" "" "$line"
 			continue
 		fi
 
+		# shellcheck disable=SC2154
 		case "$line" in
 			"### "*) sty="$sty_header3" && line="${line#'### '}" ;;
 			"## "*) sty="$sty_header2" && line="${line#'## '}"  ;;
@@ -198,8 +200,7 @@ typesetgmi() {
 				echo "${link#' '}" >> "$linksfile"
 				linkcount=$((linkcount+1))
 
-				# shellcheck disable=SC2086
-				line="$(echo $link | cut -d' ' -f2-)"
+				line="$(echo "$link" | cut -d' ' -f2-)"
 				[ -z "$line" ] && line="$link"
 
 				sty="$sty_linkb${linkcount}$sty_linkt"
@@ -282,10 +283,12 @@ EOF
 		debug "using client cert for domain: $certfile"
 	fi
 
-	[ "$trace" ] && echo "url: $1://$2:$3/$4$5" >> "$tracefile"
+	port=$( [ "$3" = "1965" ] || ":$3" )
+	url="$1://$2$port/$4$5"
+	[ "$trace" ] && echo "url: $url" >> "$tracefile"
 
 	stop
-	echo "$1://$2:$3/$4$5" | eval openssl s_client \
+	echo "$url" | eval openssl s_client \
 		-connect "$2:$3" "$certfile" -crlf -quiet \
 		-ign_eof 2> /dev/null > "$pagefile"
 	stop "openssl fetch"
@@ -314,7 +317,7 @@ EOF
 			url="$1://$2:$3/$4?$(urlencode "$input")"
 			return 0
 			;;
-		31|32)
+		30|31)
 			# Redirect
 			debug "redirecting to: $meta"
 
