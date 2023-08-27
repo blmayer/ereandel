@@ -197,10 +197,11 @@ typesetgmi() {
 			"> "*) sty="$sty_quote" && line="${line#> }" ;;
 			"=>"*)
 				link=${line#'=>'}
-				echo "${link#' '}" >> "$linksfile"
+				link=${link##' '}
+				echo "$link" >> "$linksfile"
 				linkcount=$((linkcount+1))
 
-				line="$(echo "$link" | cut -d' ' -f2-)"
+				line="$(echo "$link" | cut -d' ' -f2- | cut -f2-)"
 				[ -z "$line" ] && line="$link"
 
 				sty="$sty_linkb${linkcount}$sty_linkt"
