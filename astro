@@ -196,7 +196,7 @@ typesetgmi() {
 			"# "*) sty="$sty_header1" && line="${line#'# '}" ;;
 			"> "*) sty="$sty_quote" && line="${line#> }" ;;
 			"=>"*)
-				link=${line#'=>'}
+				link="$(echo ${line#'=>'} | tr -s '\t' ' ')"
 				echo "${link#' '}" >> "$linksfile"
 				linkcount=$((linkcount+1))
 
