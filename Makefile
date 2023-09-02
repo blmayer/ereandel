@@ -9,7 +9,7 @@ LICENSEDIR?=$(PREFIX)/share/doc/astro
 install:
 	mkdir -p $(BINDIR) $(DOCDIR) $(LICENSEDIR) $(MANDIR)
 	install -m +rx astro -t $(BINDIR)
-	install -m +r README.md -t $(DOCDIR)
+	install -m +r README.md CONTRIBUTING.md -t $(DOCDIR)
 	install -m +r LICENSE -t $(LICENSEDIR)
 	install -m +r astro.en.1 $(MANDIR)/astro.1
 
