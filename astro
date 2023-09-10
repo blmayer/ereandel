@@ -144,7 +144,7 @@ tracefile="$(mktemp -p "$cachedir" -t trace.XXXXXX)"
 debug "read configs"
 
 # Restore terminal
-trap 'tput rmcup && rm -f $histfile $linksfile $pagefile > /dev/null 2>&1; exit' EXIT INT HUP
+trap 'tput rmcup && stty echo && rm -f $histfile $linksfile $pagefile > /dev/null 2>&1; exit' EXIT INT HUP
 
 stop() {
 	[ "$trace" ] || return
@@ -198,9 +198,11 @@ parseurl() {
 
 typesetgmi() {
 	# some setup first
+	[ -f "$linksfile" ] && rm "$linksfile"
 	cols=$(tput cols)
 	width=$((cols - (2*margin)))
 	debug "text width: $width"
+	linkcount="0"
 
 	stop
 	while IFS='' read -r line || [ -n "$line" ];
@@ -257,13 +259,13 @@ pager() {
 	lines="$(cat $1 | wc -l)"
 	if [ $l -lt $lines ]; then pos="$l"; else pos="$lines"; fi
 
-	# hide cursor \e[?25l
-	#printf '\e[?25l'
 	# unhide \e[?25h
 	# move to bottom '\e[%sH'
 	printf '\e[%sH' "$l"
 	# move to top '\e[;H'
 	# erase line '\e[2K'
+	# stop echoing user input
+	stty -echo
 
 	# read inputs
 	while read -rn 1 k
@@ -277,10 +279,9 @@ pager() {
 			'[A')
 				[ $l -gt $lines ] && continue
 				[ $pos -le $l ] && continue
-				printf '\e[H\e[T'
-				sed "$((pos-l))q;d" "$1"
+				line="$(sed "$((pos-l))q;d" "$1")"
 				pos=$((pos-1))
-				printf '\e[%sH\e[2K' "$l"
+				printf '\e[H\e[L%s\e[%sH\e[2K' "$line" "$l"
 				;;
 			# down arrow
 			'[B')
@@ -322,23 +323,23 @@ pager() {
 		"$quitkey") exit 0 ;;
 		"$openkey")
 			# Open url
-			printf '\e[2K'
-			printf "Type url: "
+			printf '\e[?25h\e[2KType url: '
+			stty echo
 			read -r url <&1
 			return
 			;;
 		"$openlocalkey")
 			# Open local gmi file
-			printf '\e[2k'
-			printf "Type file path: "
+			printf '\e[?25h\e[2kType file path: '
+			stty echo
 			read -r url <&1
 			return
 			;;
 		"$refreshkey") return ;;
 		"$gokey")
 			# Follow link
-			printf '\e[K'
-			printf "Enter link number: "
+			printf '\e[?25hEnter link number: '
+			stty echo
 			read -r i <&1
 			debug "selected $i"
 			url="$(sed "${i}q;d" "$linksfile" | cut -f1 | cut -d' ' -f1)"
@@ -351,10 +352,10 @@ pager() {
 			url="$proto://$host:$port/$path"
 			return
 			;;
-		"$homekey") url="$homepage"; shift $#; return ;;
+		"$homekey") url="$homepage"; return ;;
 		"$markkey") 
-			printf '\e[K'
-			echo "Enter description: (optional)"
+			printf '\e[?25h\e[KEnter description: (optional)'
+			stty echo
 			read -r desc <&1
 			echo "$url $desc" >> "$bookmarkfile"
 			return
@@ -362,7 +363,8 @@ pager() {
 		"$gomarkkey")
 			clear
 			cat -n "$bookmarkfile"
-			printf "Enter link number: "
+			printf "\e[?25h\e[KEnter link number: "
+			stty echo
 			read -r i <&1
 			url="$(sed "${i}q;d" "$bookmarkfile" | cut -d' ' -f1)"
 			return
@@ -412,6 +414,7 @@ urlencode() {
 # Parameters: proto, host, port and path
 # Spec draft is here: https://gemini.circumlunar.space/docs/specification.html
 fetch() {
+	clear
 	if [ ! "$1" = "gemini" ]
 	then
 		echo "Only gemini links are supported."
@@ -427,7 +430,12 @@ EOF
 	fi
 
 	debug "requesting $1://$2:$3/$4$5"
+	
+	# set title
 	printf '\033]2;%s\007' "astro: $2/$4"
+	
+	# hide cursor \e[?25l
+	printf '\e[?25l'
 
 	echo "$1 $2 $3 $4 $5" >> "$histfile"
 
@@ -549,7 +557,6 @@ EOF
 	esac
 
 	# Success
-	[ -f "$linksfile" ] && rm "$linksfile"
 	oldhost="$2"
 	oldpath="$4"
 
@@ -569,9 +576,6 @@ EOF
 
 	debug "starting pager"
 	pager "$pagefile"
-	clear
-	code="$?"
-	debug "pager exited with code $code"
 
 	debug "new url: $url"
 }
