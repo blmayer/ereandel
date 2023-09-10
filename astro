@@ -12,7 +12,7 @@ usage() {
 	echo "  -v, --version		show version info"
 	echo ""
 	echo "Configuration:"
-	echo "You can setup a config file at `~/.config/astro/astro.conf` to configure *astro* the way you like."
+	echo "You can setup a config file at ~/.config/astro/astro.conf to configure *astro* the way you like."
 	echo ""
 	echo "Commands:"
 	echo "These are the default keybindings to use while running astro:"
@@ -57,7 +57,7 @@ debug() {
 
 # Parse arguments
 debug "parsing args"
-for arg in "$@"
+while "$1"
 do
 	case $1 in
 		"-v")
@@ -266,12 +266,12 @@ pager() {
 	# erase line '\e[2K'
 
 	# read inputs
-	while read -srn 1 k
+	while read -rn 1 k
 	do
 		case "$k" in
 		# commands
 		$'\e')
-		read -srn 2 b
+		read -rn 2 b
 		case "$b" in
 			# up arrow
 			'[A')
@@ -563,7 +563,7 @@ EOF
 	debug "charset: $charset"
 
 	case $meta in
-		"text/gemini"* | "") cat "$pagefile" | typesetgmi > "$pagefile.gmi"; mv "$pagefile.gmi" "$pagefile" ;;
+		"text/gemini"* | "") typesetgmi < "$pagefile" > "$pagefile.gmi"; mv "$pagefile.gmi" "$pagefile" ;;
 		*) ;;
 	esac 
 
@@ -579,7 +579,7 @@ EOF
 # files are handled differently
 if [ "$file" ] && [ -f "$file" ]
 then
-	cat "$file" | typesetgmi > "$pagefile"
+	typesetgmi < "$file" > "$pagefile"
 	pager "$pagefile"
 fi
 
