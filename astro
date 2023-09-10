@@ -56,17 +56,34 @@ debug() {
 }
 
 # Parse arguments
-args="$*"
-case "$args" in
-	'--help'* | '-h'*)
-		usage
-		exit
-		;;
-	'--version'* | '-v'*)
-		version
-		exit
-		;;
-esac
+debug "parsing args"
+for arg in "$@"
+do
+	case $1 in
+		"-v")
+			debug=1
+			;;
+		"-h" | "--help")
+			usage
+			exit 0
+			;;
+		"--version")
+			version
+			exit 0
+			;;
+		"-f"|"--file")
+			shift
+			file="$1"
+			;;
+		"")
+			break
+			;;
+		*)
+			url="$1"
+			;;
+	esac
+	shift
+done
 
 # Save terminal
 tput smcup
@@ -76,43 +93,45 @@ confighome=${XDG_CONFIG_HOME:-$HOME/.config}
 mkdir -p "$confighome/astro"
 configfile="$confighome/astro/astro.conf"
 bookmarkfile="$confighome/astro/bookmarks"
-LESSKEY="$confighome/astro/less.keys"
 certdir="$confighome/astro/certs"
 mkdir -p "$certdir"
 
 cachedir="${XDG_CACHE_HOME:-$HOME/.cache}/astro"
 
-# This is the final binary form, to save space, it corresponds to:
-# o (49): go to a URL
-# r (50): reload page
-# g (51): go to a link
-# b (52): go back
-# H (53): go to homepage
-# m (54): add page to bookmarks
-# M (55): go to a bookmark
-# K (56): remove bookmark for current url
-# u (57): jump one path element up
-[ -n "$LESSKEY" ] && echo "AE0rR2MtAG8AmDEAcgCYMgBnAJgzAGIAmDQASACYNQBtAJg2AE0AmDcASwCYOAB1AJg5AGUAAHYAAHhFbmQ=" | \
-	base64 -d  > "$LESSKEY"
-
 if [ ! -s "$configfile" ]
 then
 	# Default values
 	cat << EOF > "$configfile"
+# where to store temp files
 cachedir="$cachedir"
+
+# user config
 margin=8
 homepage="gemini.circumlunar.space/"
-sty_header1='\\033[35;7;1m'
-sty_header2='\\033[35;4;1m'
-sty_header3='\\033[35;4m'
-sty_quote='\\033[2;3m  '
-sty_linkb='\\033[35m'
-sty_linkt=' => \\033[36;3m '
-sty_listb='\\033[35;1m  •'
-sty_listt='\\033[0m '
+
+# keybindings
+openkey='o'
+gokey='g'
+refreshkey='r'
+backkey='b'
+quitkey='q'
+markkey='b'
+gomarkkey='M'
+delmarkkey='K'
+goupkey='u'
+homekey='H'
+
+# styles
+sty_header1='\033[35;7;1m'
+sty_header2='\033[35;4;1m'
+sty_header3='\033[35;4m'
+sty_quote='\033[2;3m  '
+sty_linkb='\033[35m'
+sty_linkt=' => \033[36;3m '
+sty_listb='\033[35;1m  •'
+sty_listt='\033[0m '
 EOF
 fi
-
 
 # shellcheck disable=SC1090
 . "$configfile"
@@ -122,6 +141,7 @@ pagefile="$(mktemp -p "$cachedir" -t curpage.XXXXXX)"
 histfile="$(mktemp -p "$cachedir" -t history.XXXXXX)"
 linksfile="$(mktemp -p "$cachedir" -t links.XXXXXX)"
 tracefile="$(mktemp -p "$cachedir" -t trace.XXXXXX)"
+debug "read configs"
 
 # Restore terminal
 trap 'tput rmcup && rm -f $histfile $linksfile $pagefile > /dev/null 2>&1; exit' EXIT INT HUP
@@ -177,6 +197,11 @@ parseurl() {
 }
 
 typesetgmi() {
+	# some setup first
+	cols=$(tput cols)
+	width=$((cols - (2*margin)))
+	debug "text width: $width"
+
 	stop
 	while IFS='' read -r line || [ -n "$line" ];
 	do
@@ -209,19 +234,152 @@ typesetgmi() {
 				sty="$sty_linkb${linkcount}$sty_linkt"
 				;;
 			'* '*) sty="$sty_listb$sty_listt" && line="${line#* }";;
-			*) sty="";;
+			*) sty='' ;;
 		esac
 		echo "$line" | fold -w "$width" -s | {
 			while IFS='' read -r txt
 			do
 				printf "%*s" "$margin" ""
 				# shellcheck disable=SC2059
-				printf "$sty"
+				printf -- "$sty"
 				echo "$txt"
+				printf '\e[m'
 			done
 		}
 	done
 	stop "typeset"
+}
+
+pager() {
+	# lines columns
+	l="$(tput lines)"
+	head -n "$((l-1))" "$1"
+	lines="$(cat $1 | wc -l)"
+	if [ $l -lt $lines ]; then pos="$l"; else pos="$lines"; fi
+
+	# hide cursor \e[?25l
+	#printf '\e[?25l'
+	# unhide \e[?25h
+	# move to bottom '\e[%sH'
+	printf '\e[%sH' "$l"
+	# move to top '\e[;H'
+	# erase line '\e[2K'
+
+	# read inputs
+	while read -srn 1 k
+	do
+		case "$k" in
+		# commands
+		$'\e')
+		read -srn 2 b
+		case "$b" in
+			# up arrow
+			'[A')
+				[ $l -gt $lines ] && continue
+				[ $pos -le $l ] && continue
+				printf '\e[H\e[T'
+				sed "$((pos-l))q;d" "$1"
+				pos=$((pos-1))
+				printf '\e[%sH\e[2K' "$l"
+				;;
+			# down arrow
+			'[B')
+				[ $l -gt $lines ] && continue
+				[ $pos -gt $lines ] && continue
+				printf '\e[%sH' "$l"
+				sed "${pos}q;d" "$1"
+				pos=$((pos+1))
+				;;
+			# TODO
+			# # page up
+			# '[5')
+			# 	# discard one extra byte
+			# 	read -srn 1 x
+
+			# 	[ $l -gt $lines ] && continue
+			# 	[ $pos -le $l ] && continue
+			# 	start=$((pos-l+1))
+			# 	[ $start -lt $l ] && start="$((l+1))"
+			# 	printf '\e[H\e[%sT' "$start"
+			# 	sed "$((start-l-1)),$((start-1))!d;\$q" "$1"
+			# 	pos="$start"
+			# 	;;
+			# # page down
+			# '[6') 
+			# 	# discard one extra byte
+			# 	read -srn 1 x
+
+			# 	[ $l -gt $lines ] && continue
+			# 	[ $pos -ge $lines ] && continue
+			# 	end=$((pos+l-1))
+			# 	[ $end -gt $lines ] && end="$((lines+1))"
+			# 	printf '\e[%sH' "$l"
+			# 	sed "$pos,$((end-1))!d;\$q" "$1"
+			# 	pos="$end"
+			# 	;;
+			*) printf "read $b\n" ;;
+		esac ;;
+		"$quitkey") exit 0 ;;
+		"$openkey")
+			# Open url
+			printf '\e[2K'
+			printf "Type url: "
+			read -r url <&1
+			return
+			;;
+		"$openlocalkey")
+			# Open local gmi file
+			printf '\e[2k'
+			printf "Type file path: "
+			read -r url <&1
+			return
+			;;
+		"$refreshkey") return ;;
+		"$gokey")
+			# Follow link
+			printf '\e[K'
+			printf "Enter link number: "
+			read -r i <&1
+			debug "selected $i"
+			url="$(sed "${i}q;d" "$linksfile" | cut -f1 | cut -d' ' -f1)"
+			return
+			;;
+		"$backkey") 
+			read -r proto host port path <<- EOF
+			$(getprevious)
+			EOF
+			url="$proto://$host:$port/$path"
+			return
+			;;
+		"$homekey") url="$homepage"; shift $#; return ;;
+		"$markkey") 
+			printf '\e[K'
+			echo "Enter description: (optional)"
+			read -r desc <&1
+			echo "$url $desc" >> "$bookmarkfile"
+			return
+			;;
+		"$gomarkkey")
+			clear
+			cat -n "$bookmarkfile"
+			printf "Enter link number: "
+			read -r i <&1
+			url="$(sed "${i}q;d" "$bookmarkfile" | cut -d' ' -f1)"
+			return
+			;;
+		"$delmarkkey")
+			grep -iv "^$url " "$bookmarkfile" > "$cachedir/bookmarks"
+			mv "$cachedir/bookmarks" "$bookmarkfile"
+			return
+			;;
+		"$goupkey")
+			newpath=$(echo "$url" | rev | cut -d'/' -f2- | rev)
+			url="${url%/*}/$newpath"
+			return
+			;;
+		*) printf "typed $k\n" ;;
+		esac
+	done
 }
 
 # borrowed from https://gist.github.com/cdown/1163649
@@ -268,17 +426,11 @@ EOF
 		return
 	fi
 
-	# Some setup first
-	cols=$(tput cols)
-	width=$((cols - (2*margin)))
-	debug "text width: $width"
-
 	debug "requesting $1://$2:$3/$4$5"
 	printf '\033]2;%s\007' "astro: $2/$4"
 
 	echo "$1 $2 $3 $4 $5" >> "$histfile"
 
-	clear
 	certfile=""
 	if [ -f "$certdir/$2.crt" ] && [ -f "$certdir/$2.key" ]
 	then
@@ -398,6 +550,8 @@ EOF
 
 	# Success
 	[ -f "$linksfile" ] && rm "$linksfile"
+	oldhost="$2"
+	oldpath="$4"
 
 	# Set charset
 	charset="$(echo "$meta" | grep -i "charset=" | sed -e 's/.*charset=\([^;]\+\).*/\1/Ig')"
@@ -409,70 +563,28 @@ EOF
 	debug "charset: $charset"
 
 	case $meta in
-		"text/gemini"* | "") typesetgmi ;;
-		*) cat ;;
-	esac < "$pagefile" | LESSCHARSET="$charset" less -k "$LESSKEY" +k -R
-	code="$?"
-	rm "$pagefile"
+		"text/gemini"* | "") cat "$pagefile" | typesetgmi > "$pagefile.gmi"; mv "$pagefile.gmi" "$pagefile" ;;
+		*) ;;
+	esac 
 
-	# Choose what to do next
-	debug "pager exit code: $code"
-	case "$code" in
-		0) exit 0 ;;
-		49)
-			# Open url
-			printf "Type url: "
-			read -r url <&1
-			;;
-		50) url="$1://$2:$3/$4" ;;
-		51)
-			# Follow link
-			cat -n "$linksfile"
-			printf "Enter link number: "
-			read -r i <&1
-			debug "selected $i"
-			url="$(sed "${i}q;d" "$linksfile" | cut -f1 | cut -d' ' -f1)"
-			oldhost="$2"; oldpath="$4"
-			;;
-		52) 
-			read -r proto host port path << EOF
-				$(getprevious)
-EOF
-			url="$proto://$host:$port/$path"
-			;;
-		53) url="$homepage"; shift $# ;;
-		54) 
-			echo "Enter description: (optional)"
-			read -r desc <&1
-			url="$1://$2:$3/$4"
-			echo "$url $desc" >> "$bookmarkfile"
-			;;
-		55)
-			cat -n "$bookmarkfile"
-			printf "Enter link number: "
-			read -r i <&1
-			url="$(sed "${i}q;d" "$bookmarkfile" | cut -d' ' -f1)"
-			;;
-		56)
-			url="$1://$2:$3/$4"
-			grep -iv "^$url " "$bookmarkfile" > "$cachedir/bookmarks"
-			mv "$cachedir/bookmarks" "$bookmarkfile"
-			;;
-		57)
-			newpath=$(echo "/${4%/}" | rev | cut -d'/' -f2- | rev)
-			url="$1://$2:$3$newpath"
-			;;
-	esac
+	debug "starting pager"
+	pager "$pagefile"
+	clear
+	code="$?"
+	debug "pager exited with code $code"
 
 	debug "new url: $url"
 }
 
-# Execution
-export LESS='-P Keys\: qgrubosHmMK, to see a description run astro -h'
+# files are handled differently
+if [ "$file" ] && [ -f "$file" ]
+then
+	cat "$file" | typesetgmi > "$pagefile"
+	pager "$pagefile"
+fi
 
-# First request
-url="${args:-$homepage}"
-
+# first request
+url="${url:-$homepage}"
 while :
 do
 	# shellcheck disable=SC2046
