@@ -215,19 +215,17 @@ typesetgmi() {
 		# add margins and fold
 		if [ "$pre" = 1 ]
 		then
-			# shellcheck disable=SC2154
 			printf '%*s%s\n' "$margin" "" "$line"
 			continue
 		fi
 
-		# shellcheck disable=SC2154
 		case "$line" in
 			"### "*) sty="$sty_header3" && line="${line#'### '}" ;;
 			"## "*) sty="$sty_header2" && line="${line#'## '}"  ;;
 			"# "*) sty="$sty_header1" && line="${line#'# '}" ;;
 			"> "*) sty="$sty_quote" && line="${line#> }" ;;
 			"=>"*)
-				link="$(echo ${line#'=>'} | tr -s '\t' ' ')"
+				link="$(echo "${line#'=>'}" | tr -s '\t' ' ')"
 				echo "${link#' '}" >> "$linksfile"
 				linkcount=$((linkcount+1))
 
@@ -243,7 +241,6 @@ typesetgmi() {
 			while IFS='' read -r txt
 			do
 				printf "%*s" "$margin" ""
-				# shellcheck disable=SC2059
 				printf -- "$sty"
 				echo "$txt"
 				printf '\e[m'
@@ -257,8 +254,8 @@ pager() {
 	# lines columns
 	l="$(tput lines)"
 	head -n "$((l-1))" "$1"
-	lines="$(cat $1 | wc -l)"
-	if [ $l -lt $lines ]; then pos="$l"; else pos="$lines"; fi
+	lines="$(cat "$1" | wc -l)"
+	if [ "$l" -lt "$lines" ]; then pos="$l"; else pos="$lines"; fi
 
 	# unhide \e[?25h
 	# move to bottom '\e[%sH' lines
@@ -278,16 +275,16 @@ pager() {
 			case "$b" in
 				# up arrow
 				'[A')
-					[ $l -gt $lines ] && continue
-					[ $pos -le $l ] && continue
+					[ "$l" -gt "$lines" ] && continue
+					[ "$pos" -le "$l" ] && continue
 					line="$(sed "$((pos-l))q;d" "$1")"
 					pos=$((pos-1))
 					printf '\e[H\e[L%s\e[%sH\e[2K' "$line" "$l"
 					;;
 				# down arrow
 				'[B')
-					[ $l -gt $lines ] && continue
-					[ $pos -gt $lines ] && continue
+					[ "$l" -gt "$lines" ] && continue
+					[ "$pos" -gt "$lines" ] && continue
 					printf '\e[%sH' "$l"
 					sed "${pos}q;d" "$1"
 					pos=$((pos+1))
@@ -593,8 +590,9 @@ fi
 url="${url:-$homepage}"
 while :
 do
-	# shellcheck disable=SC2046
 	printf '\033]2;%s\007' "astro (w)"
+
+	# shellcheck disable=SC2046
 	fetch $(parseurl)
 done
 
