@@ -1,6 +1,6 @@
 #!/bin/sh
 
-version="0.22.4"
+version="0.23.0"
 
 usage() {
 	echo "astro v$version: Browse the gemini web on the terminal."
@@ -101,37 +101,37 @@ cachedir="${XDG_CACHE_HOME:-$HOME/.cache}/astro"
 if [ ! -s "$configfile" ]
 then
 	# Default values
-	cat << EOF > "$configfile"
-# where to store temp files
-cachedir="$cachedir"
+	cat <<- EOF > "$configfile"
+	# where to store temp files
+	cachedir="$cachedir"
 
-# user config
-margin=8
-homepage="gemini.circumlunar.space/"
+	# user config
+	margin=8
+	homepage="gemini.circumlunar.space/"
 
-# keybindings
-openkey='o'
-openlocalkey='O'
-gokey='g'
-refreshkey='r'
-backkey='b'
-quitkey='q'
-markkey='b'
-gomarkkey='M'
-delmarkkey='K'
-goupkey='u'
-homekey='H'
+	# keybindings
+	openkey='o'
+	openlocalkey='O'
+	gokey='g'
+	refreshkey='r'
+	backkey='b'
+	quitkey='q'
+	markkey='b'
+	gomarkkey='M'
+	delmarkkey='K'
+	goupkey='u'
+	homekey='H'
 
-# styles
-sty_header1='\033[35;7;1m'
-sty_header2='\033[35;4;1m'
-sty_header3='\033[35;4m'
-sty_quote='\033[2;3m  '
-sty_linkb='\033[35m'
-sty_linkt=' => \033[36;3m '
-sty_listb='\033[35;1m  •'
-sty_listt='\033[0m '
-EOF
+	# styles
+	sty_header1='\033[35;7;1m'
+	sty_header2='\033[35;4;1m'
+	sty_header3='\033[35;4m'
+	sty_quote='\033[2;3m  '
+	sty_linkb='\033[35m'
+	sty_linkt=' => \033[36;3m '
+	sty_listb='\033[35;1m  •'
+	sty_listt='\033[0m '
+	EOF
 fi
 
 # shellcheck disable=SC1090
@@ -269,62 +269,61 @@ pager() {
 	stty -echo -icanon min 1 time 0
 
 	# read inputs
-	while k="$(dd bs=1 count=1 status=none)"
+	while k="$(dd bs=1 count=1 status=none | od -c -An | tr -d ' ')"
 	do
 		case "$k" in
-		# commands
-		$'\e')
-		b="$(dd bs=2 count=1 status=none)"
-		case "$b" in
-			# up arrow
-			'[A')
-				[ $l -gt $lines ] && continue
-				[ $pos -le $l ] && continue
-				line="$(sed "$((pos-l))q;d" "$1")"
-				pos=$((pos-1))
-				printf '\e[H\e[L%s\e[%sH\e[2K' "$line" "$l"
-				;;
-			# down arrow
-			'[B')
-				[ $l -gt $lines ] && continue
-				[ $pos -gt $lines ] && continue
-				printf '\e[%sH' "$l"
-				sed "${pos}q;d" "$1"
-				pos=$((pos+1))
-				;;
-			# TODO
-			# # page up
-			# '[5')
-			# 	# discard one extra byte
-			# 	read -srn 1 x
+		# command sequences
+		"033")
+			b="$(dd bs=2 count=1 status=none)"
+			case "$b" in
+				# up arrow
+				'[A')
+					[ $l -gt $lines ] && continue
+					[ $pos -le $l ] && continue
+					line="$(sed "$((pos-l))q;d" "$1")"
+					pos=$((pos-1))
+					printf '\e[H\e[L%s\e[%sH\e[2K' "$line" "$l"
+					;;
+				# down arrow
+				'[B')
+					[ $l -gt $lines ] && continue
+					[ $pos -gt $lines ] && continue
+					printf '\e[%sH' "$l"
+					sed "${pos}q;d" "$1"
+					pos=$((pos+1))
+					;;
+				# TODO
+				# # page up
+				# '[5')
+				# 	# discard one extra byte
+				# 	read -srn 1 x
 
-			# 	[ $l -gt $lines ] && continue
-			# 	[ $pos -le $l ] && continue
-			# 	start=$((pos-l+1))
-			# 	[ $start -lt $l ] && start="$((l+1))"
-			# 	printf '\e[H\e[%sT' "$start"
-			# 	sed "$((start-l-1)),$((start-1))!d;\$q" "$1"
-			# 	pos="$start"
-			# 	;;
-			# # page down
-			# '[6') 
-			# 	# discard one extra byte
-			# 	read -srn 1 x
+				# 	[ $l -gt $lines ] && continue
+				# 	[ $pos -le $l ] && continue
+				# 	start=$((pos-l+1))
+				# 	[ $start -lt $l ] && start="$((l+1))"
+				# 	printf '\e[H\e[%sT' "$start"
+				# 	sed "$((start-l-1)),$((start-1))!d;\$q" "$1"
+				# 	pos="$start"
+				# 	;;
+				# # page down
+				# '[6') 
+				# 	# discard one extra byte
+				# 	read -srn 1 x
 
-			# 	[ $l -gt $lines ] && continue
-			# 	[ $pos -ge $lines ] && continue
-			# 	end=$((pos+l-1))
-			# 	[ $end -gt $lines ] && end="$((lines+1))"
-			# 	printf '\e[%sH' "$l"
-			# 	sed "$pos,$((end-1))!d;\$q" "$1"
-			# 	pos="$end"
-			# 	;;
-		esac ;;
+				# 	[ $l -gt $lines ] && continue
+				# 	[ $pos -ge $lines ] && continue
+				# 	end=$((pos+l-1))
+				# 	[ $end -gt $lines ] && end="$((lines+1))"
+				# 	printf '\e[%sH' "$l"
+				# 	sed "$pos,$((end-1))!d;\$q" "$1"
+				# 	pos="$end"
+				# 	;;
+			esac ;;
 		"$quitkey") exit 0 ;;
 		"$openkey")
-			# Open url
 			printf '\e[?25h\e[2KType url: '
-			stty echo
+			stty echo icanon
 			read -r url <&1
 			return
 			;;
@@ -338,9 +337,8 @@ pager() {
 		# 	;;
 		"$refreshkey") return ;;
 		"$gokey")
-			# Follow link
 			printf '\e[?25hEnter link number: '
-			stty echo
+			stty echo icanon
 			read -r i <&1
 			debug "selected $i"
 			url="$(sed "${i}q;d" "$linksfile" | cut -f1 | cut -d' ' -f1)"
@@ -356,7 +354,7 @@ pager() {
 		"$homekey") url="$homepage"; return ;;
 		"$markkey") 
 			printf '\e[?25h\e[KEnter description: (optional)'
-			stty echo
+			stty echo icanon
 			read -r desc <&1
 			echo "$url $desc" >> "$bookmarkfile"
 			return
@@ -365,7 +363,7 @@ pager() {
 			clear
 			cat -n "$bookmarkfile"
 			printf "\e[?25h\e[KEnter link number: "
-			stty echo
+			stty echo icanon
 			read -r i <&1
 			url="$(sed "${i}q;d" "$bookmarkfile" | cut -d' ' -f1)"
 			return
@@ -420,9 +418,9 @@ fetch() {
 		echo "Only gemini links are supported."
 		echo "Type a key to continue."
 		read -r i <&1
-		read -r proto host port path << EOF
+		read -r proto host port path <<- EOF
 			$(getprevious)
-EOF
+		EOF
 		url="$proto://$host:$port/$path"
 		url="${url:-$homepage}"
 		debug "previous page: $url"
@@ -432,7 +430,7 @@ EOF
 	debug "requesting $1://$2:$3/$4$5"
 	
 	# set title
-	printf '\033]2;%s\007' "astro: $2/$4"
+	printf '\033]2;%s\007' "astro (c): $2/$4"
 	
 	# hide cursor \e[?25l
 	printf '\e[?25l'
@@ -455,8 +453,10 @@ EOF
 		-connect "$2:$3" "$certfile" -crlf -quiet \
 		-ign_eof 2> /dev/null > "$pagefile"
 	stop "openssl fetch"
-
 	stop
+
+	printf '\033]2;%s\007' "astro (r): $2/$4"
+
 	# First line is status and meta information
 	read -r status meta < "$pagefile"
 	status="$(echo "$status" | tr -d '\r\n')"
@@ -485,9 +485,9 @@ EOF
 			debug "redirecting to: $meta"
 
 			# shellcheck disable=SC2046
-			read -r proto host port path << EOF
+			read -r proto host port path <<- EOF
 				$(oldhost="$2" oldpath="$4" url="$meta" parseurl)
-EOF
+			EOF
 			url="$proto://$host:$port/$path"
 			return 0
 			;;
@@ -513,9 +513,9 @@ EOF
 			echo "Page not found!" >&2
 			echo "Type a key to return to previous page."
 			read -r i <&1
-			read -r proto host port path << EOF
+			read -r proto host port path <<- EOF
 				$(getprevious)
-EOF
+			EOF
 			url="$proto://$host:$port/$path"
 			debug "previous page: $url"
 			return 0
@@ -539,9 +539,9 @@ EOF
 			read -r in <&1
 			if [ "$in" = "b" ]
 			then
-				read -r proto host port path << EOF
+				read -r proto host port path <<- EOF
 					$(getprevious)
-EOF
+				EOF
 				url="$proto://$host:$port/$path"
 			else
 				url="$1://$2:$3/$4?$5"
@@ -569,12 +569,14 @@ EOF
 	esac
 	debug "charset: $charset"
 
+	printf '\033]2;%s\007' "astro (t): $2/$4"
 	case $meta in
 		"text/gemini"* | "") typesetgmi < "$pagefile" > "$pagefile.gmi"; mv "$pagefile.gmi" "$pagefile" ;;
 		*) ;;
 	esac 
 
 	debug "starting pager"
+	printf '\033]2;%s\007' "astro (l): $2/$4"
 	pager "$pagefile"
 
 	debug "new url: $url"
@@ -592,6 +594,7 @@ url="${url:-$homepage}"
 while :
 do
 	# shellcheck disable=SC2046
+	printf '\033]2;%s\007' "astro (w)"
 	fetch $(parseurl)
 done
 
