@@ -199,12 +199,13 @@ parseurl() {
 
 typesetgmi() {
 	# some setup first
-	# shellcheck disable=SC2154
 	[ -f "$linksfile" ] && rm "$linksfile"
 	cols=$(tput cols)
+	linkcount="0"
+
+	# shellcheck disable=SC2154
 	width=$((cols - (2*margin)))
 	debug "text width: $width"
-	linkcount="0"
 
 	stop
 	while IFS='' read -r line || [ -n "$line" ];
@@ -241,8 +242,9 @@ typesetgmi() {
 		echo "$line" | fold -w "$width" -s | {
 			while IFS='' read -r txt
 			do
-				# shellcheck disable=SC2059
 				printf "%*s" "$margin" ""
+
+				# shellcheck disable=SC2059
 				printf -- "$sty"
 				echo "$txt"
 				printf '\e[m'
