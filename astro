@@ -111,6 +111,7 @@ homepage="gemini.circumlunar.space/"
 
 # keybindings
 openkey='o'
+openlocalkey='O'
 gokey='g'
 refreshkey='r'
 backkey='b'
@@ -260,20 +261,20 @@ pager() {
 	if [ $l -lt $lines ]; then pos="$l"; else pos="$lines"; fi
 
 	# unhide \e[?25h
-	# move to bottom '\e[%sH'
+	# move to bottom '\e[%sH' lines
 	printf '\e[%sH' "$l"
 	# move to top '\e[;H'
 	# erase line '\e[2K'
-	# stop echoing user input
-	stty -echo
+	# stop echoing user input and read input unbufered
+	stty -echo -icanon min 1 time 0
 
 	# read inputs
-	while read -rn 1 k
+	while k="$(dd bs=1 count=1 status=none)"
 	do
 		case "$k" in
 		# commands
 		$'\e')
-		read -rn 2 b
+		b="$(dd bs=2 count=1 status=none)"
 		case "$b" in
 			# up arrow
 			'[A')
@@ -318,7 +319,6 @@ pager() {
 			# 	sed "$pos,$((end-1))!d;\$q" "$1"
 			# 	pos="$end"
 			# 	;;
-			*) printf "read $b\n" ;;
 		esac ;;
 		"$quitkey") exit 0 ;;
 		"$openkey")
@@ -328,13 +328,14 @@ pager() {
 			read -r url <&1
 			return
 			;;
-		"$openlocalkey")
-			# Open local gmi file
-			printf '\e[?25h\e[2kType file path: '
-			stty echo
-			read -r url <&1
-			return
-			;;
+		# FIXME: dont know how yet
+		# "$openlocalkey")
+		# 	# Open local gmi file
+		# 	printf '\e[?25h\e[2kType file path: '
+		# 	stty echo
+		# 	read -r url <&1
+		# 	return
+		# 	;;
 		"$refreshkey") return ;;
 		"$gokey")
 			# Follow link
@@ -379,7 +380,6 @@ pager() {
 			url="${url%/*}/$newpath"
 			return
 			;;
-		*) printf "typed $k\n" ;;
 		esac
 	done
 }
