@@ -199,6 +199,7 @@ parseurl() {
 
 typesetgmi() {
 	# some setup first
+	# shellcheck disable=SC2154
 	[ -f "$linksfile" ] && rm "$linksfile"
 	cols=$(tput cols)
 	width=$((cols - (2*margin)))
@@ -209,8 +210,7 @@ typesetgmi() {
 	while IFS='' read -r line || [ -n "$line" ];
 	do
 		line="$(echo "$line" | tr -d '\r')"
-		# shellcheck disable=SC2016
-		echo "$line" | grep -q '^```' && pre=$((1 - pre)) && line=""
+		echo "$line" | grep -q "^\`\`\`" && pre=$((1 - pre)) && line=""
 
 		# add margins and fold
 		if [ "$pre" = 1 ]
@@ -241,6 +241,7 @@ typesetgmi() {
 		echo "$line" | fold -w "$width" -s | {
 			while IFS='' read -r txt
 			do
+				# shellcheck disable=SC2059
 				printf "%*s" "$margin" ""
 				printf -- "$sty"
 				echo "$txt"
