@@ -269,6 +269,7 @@ pager() {
 	# read inputs
 	while k="$(dd bs=1 count=1 status=none | od -c -An | tr -d ' ')"
 	do
+		# shellcheck disable=SC2154
 		case "$k" in
 		# command sequences
 		"033")
@@ -318,9 +319,7 @@ pager() {
 				# 	pos="$end"
 				# 	;;
 			esac ;;
-		# shellcheck disable=SC2154
 		"$quitkey") exit 0 ;;
-		# shellcheck disable=SC2154
 		"$openkey")
 			printf '\e[?25h\e[2KType url: '
 			stty echo icanon
@@ -335,9 +334,7 @@ pager() {
 		# 	read -r url <&1
 		# 	return
 		# 	;;
-		# shellcheck disable=SC2154
 		"$refreshkey") return ;;
-		# shellcheck disable=SC2154
 		"$gokey")
 			printf '\e[?25hEnter link number: '
 			stty echo icanon
@@ -346,7 +343,6 @@ pager() {
 			url="$(sed "${i}q;d" "$linksfile" | cut -f1 | cut -d' ' -f1)"
 			return
 			;;
-		# shellcheck disable=SC2154
 		"$backkey") 
 			read -r proto host port path <<- EOF
 			$(getprevious)
@@ -354,9 +350,7 @@ pager() {
 			url="$proto://$host:$port/$path"
 			return
 			;;
-		# shellcheck disable=SC2154
 		"$homekey") url="$homepage"; return ;;
-		# shellcheck disable=SC2154
 		"$markkey") 
 			printf '\e[?25h\e[KEnter description: (optional)'
 			stty echo icanon
@@ -364,7 +358,6 @@ pager() {
 			echo "$url $desc" >> "$bookmarkfile"
 			return
 			;;
-		# shellcheck disable=SC2154
 		"$gomarkkey")
 			clear
 			cat -n "$bookmarkfile"
@@ -374,13 +367,11 @@ pager() {
 			url="$(sed "${i}q;d" "$bookmarkfile" | cut -d' ' -f1)"
 			return
 			;;
-		# shellcheck disable=SC2154
 		"$delmarkkey")
 			grep -iv "^$url " "$bookmarkfile" > "$cachedir/bookmarks"
 			mv "$cachedir/bookmarks" "$bookmarkfile"
 			return
 			;;
-		# shellcheck disable=SC2154
 		"$goupkey")
 			newpath=$(echo "$url" | rev | cut -d'/' -f2- | rev)
 			url="${url%/*}/$newpath"
