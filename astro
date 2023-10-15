@@ -1,6 +1,6 @@
 #!/bin/sh
 
-version="0.23.0"
+version="0.24.0"
 
 usage() {
 	echo "astro v$version: Browse the gemini web on the terminal."
@@ -327,6 +327,12 @@ pager() {
 			printf '\e[?25h\e[2KType url: '
 			stty echo icanon
 			read -r url <&1
+
+			# add gemini:// to begining if not (for convenience)
+			case "$url" in
+			       "gemini://"*) ;;
+			       *) url="gemini://$url" ;;
+			esac
 			return
 			;;
 		# FIXME: dont know how yet
