@@ -313,19 +313,22 @@ pager() {
 						printf '\e[H\e[L%s\e[%sH\e[2K' "$line" "$lines"
 					done
 					;;
-				# # page down
-				# '[6') 
-				# 	# discard one extra byte
-				# 	read -srn 1 x
+				# page down
+				'[6') 
+					# discard one extra byte
+					read -srn 1 x
 
-				# 	[ $l -gt $lines ] && continue
-				# 	[ $pos -ge $lines ] && continue
-				# 	end=$((pos+l-1))
-				# 	[ $end -gt $lines ] && end="$((lines+1))"
-				# 	printf '\e[%sH' "$l"
-				# 	sed "$pos,$((end-1))!d;\$q" "$1"
-				# 	pos="$end"
-				# 	;;
+					[ $pos -ge $l ] && continue
+					scroll=$((lines-1))
+					end="$((pos+scroll))"
+					[ $end -ge $l ] && scroll="$((l-pos))"
+					for i in $(seq 1 "$scroll")
+					do
+						printf '\e[%sH' "$lines"
+						sed "${pos}q;d" "$1"
+						pos=$((pos+1))
+					done
+					;;
 			esac ;;
 		"$quitkey") exit 0 ;;
 		"$openkey")
