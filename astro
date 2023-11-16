@@ -98,6 +98,35 @@ mkdir -p "$certdir"
 
 cachedir="${XDG_CACHE_HOME:-$HOME/.cache}/astro"
 
+# Default values
+
+# user config
+margin=8
+homepage="geminiprotocol.net/"
+
+# keybindings
+openkey='o'
+openlocalkey='O'
+gokey='g'
+refreshkey='r'
+backkey='b'
+quitkey='q'
+markkey='b'
+gomarkkey='M'
+delmarkkey='K'
+goupkey='u'
+homekey='H'
+
+# styles
+sty_header1='\033[35;7;1m'
+sty_header2='\033[35;4;1m'
+sty_header3='\033[35;4m'
+sty_quote='\033[2;3m  '
+sty_linkb='\033[35m'
+sty_linkt=' => \033[36;3m '
+sty_listb='\033[35;1m  •'
+sty_listt='\033[0m '
+
 if [ ! -s "$configfile" ]
 then
 	# Default values
@@ -134,7 +163,7 @@ then
 	EOF
 fi
 
-# shellcheck disable=SC1090
+# shellcheck source=/dev/null
 . "$configfile"
 
 mkdir -p "$cachedir"
@@ -300,7 +329,7 @@ pager() {
 				# page up
 				'[5')
 					# discard one extra byte
-					read -srn 1 x
+					dd bs=1 count=1 status=none > /dev/null
 
 					[ "$pos" -le "$lines" ] && continue
 					scroll=$((pos-lines))
@@ -316,7 +345,7 @@ pager() {
 				# page down
 				'[6') 
 					# discard one extra byte
-					read -srn 1 x
+					dd bs=1 count=1 status=none > /dev/null
 
 					[ $pos -ge $l ] && continue
 					scroll=$((lines-1))
