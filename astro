@@ -254,25 +254,30 @@ typesetgmi() {
 	stop "typeset"
 }
 
+# some help:
+# \e[;H		move to top 
+# \e[NH 	move to bottom N lines
+# \e[?25l	hide cursor
+# \e[?25h	unhide cursor
+# \e[2K		erase line
 pager() {
-	# lines columns
-	l="$(tput lines)"
-	head -n "$((l-1))" "$1"
-	lines="$(wc -l < "$1")"
-	if [ "$l" -lt "$lines" ]; then pos="$l"; else pos="$lines"; fi
+	clear
 
-	# unhide \e[?25h
-	# move to bottom '\e[%sH' lines
-	printf '\e[%sH' "$l"
-	# move to top '\e[;H'
-	# erase line '\e[2K'
+	# hide cursor
+	printf '\e[?25l'
+
+	# lines columns
+	lines="$(tput lines)"
+	head -n "$((lines-1))" "$1"
+	l="$(wc -l < "$1")"
+	if [ "$lines" -lt "$l" ]; then pos="$lines"; else pos="$l"; fi
+
 	# stop echoing user input and read input unbufered
 	stty -echo -icanon min 1 time 0
 
 	# read inputs
 	while k="$(dd bs=1 count=1 status=none | od -c -An | tr -d ' ')"
 	do
-		# shellcheck disable=SC2154
 		case "$k" in
 		# command sequences
 		"033")
@@ -280,34 +285,34 @@ pager() {
 			case "$b" in
 				# up arrow
 				'[A')
-					[ "$l" -gt "$lines" ] && continue
-					[ "$pos" -le "$l" ] && continue
-					line="$(sed "$((pos-l))q;d" "$1")"
+					[ "$pos" -le "$lines" ] && continue
+					line="$(sed "$((pos-lines))q;d" "$1")"
 					pos=$((pos-1))
-					printf '\e[H\e[L%s\e[%sH\e[2K' "$line" "$l"
+					printf '\e[H\e[L%s\e[%sH\e[2K' "$line" "$lines"
 					;;
 				# down arrow
 				'[B')
-					[ "$l" -gt "$lines" ] && continue
-					[ "$pos" -gt "$lines" ] && continue
-					printf '\e[%sH' "$l"
+					[ "$pos" -ge "$l" ] && continue
+					printf '\e[%sH' "$lines"
 					sed "${pos}q;d" "$1"
 					pos=$((pos+1))
 					;;
-				# TODO
-				# # page up
-				# '[5')
-				# 	# discard one extra byte
-				# 	read -srn 1 x
+				# page up
+				'[5')
+					# discard one extra byte
+					read -srn 1 x
 
-				# 	[ $l -gt $lines ] && continue
-				# 	[ $pos -le $l ] && continue
-				# 	start=$((pos-l+1))
-				# 	[ $start -lt $l ] && start="$((l+1))"
-				# 	printf '\e[H\e[%sT' "$start"
-				# 	sed "$((start-l-1)),$((start-1))!d;\$q" "$1"
-				# 	pos="$start"
-				# 	;;
+					[ "$pos" -le "$lines" ] && continue
+					scroll=$((pos-lines))
+					[ $scroll -gt $lines ] && scroll="$((lines-1))"
+
+					for i in $(seq 1 "$scroll")
+					do
+						line="$(sed "$((pos-lines))q;d" "$1")"
+						pos=$((pos-1))
+						printf '\e[H\e[L%s\e[%sH\e[2K' "$line" "$lines"
+					done
+					;;
 				# # page down
 				# '[6') 
 				# 	# discard one extra byte
@@ -324,7 +329,7 @@ pager() {
 			esac ;;
 		"$quitkey") exit 0 ;;
 		"$openkey")
-			printf '\e[?25h\e[2KType url: '
+			printf '\e[%sH\e[?25h\e[2KType url: ' "$lines"
 			stty echo icanon
 			read -r url <&1
 
@@ -336,13 +341,15 @@ pager() {
 			return
 			;;
 		# FIXME: dont know how yet
-		# "$openlocalkey")
-		# 	# Open local gmi file
-		# 	printf '\e[?25h\e[2kType file path: '
-		# 	stty echo
-		# 	read -r url <&1
-		# 	return
-		# 	;;
+		"$openlocalkey")
+			# Open local gmi file
+			printf '\e[?25h\e[2KType file path: '
+			stty echo
+			read -r file <&1
+			typesetgmi < "$file" > "$pagefile"
+			pager "$pagefile"
+			return
+			;;
 		"$refreshkey") return ;;
 		"$gokey")
 			printf '\e[?25hEnter link number: '
@@ -420,7 +427,6 @@ urlencode() {
 # Parameters: proto, host, port and path
 # Spec draft is here: https://gemini.circumlunar.space/docs/specification.html
 fetch() {
-	clear
 	if [ ! "$1" = "gemini" ]
 	then
 		echo "Only gemini links are supported."
@@ -440,9 +446,6 @@ fetch() {
 	# set title
 	printf '\033]2;%s\007' "astro (c): $2/$4"
 	
-	# hide cursor \e[?25l
-	printf '\e[?25l'
-
 	echo "$1 $2 $3 $4 $5" >> "$histfile"
 
 	certfile=""
