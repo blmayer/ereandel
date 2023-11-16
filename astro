@@ -335,6 +335,7 @@ pager() {
 					scroll=$((pos-lines))
 					[ $scroll -gt $lines ] && scroll="$((lines-1))"
 
+					# shellcheck disable=SC2086
 					for i in $(seq 1 "$scroll")
 					do
 						line="$(sed "$((pos-lines))q;d" "$1")"
@@ -351,6 +352,8 @@ pager() {
 					scroll=$((lines-1))
 					end="$((pos+scroll))"
 					[ $end -ge $l ] && scroll="$((l-pos))"
+
+					# shellcheck disable=SC2086
 					for i in $(seq 1 "$scroll")
 					do
 						printf '\e[%sH' "$lines"
