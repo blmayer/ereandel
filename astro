@@ -239,8 +239,8 @@ typesetgmi() {
 	stop
 	while IFS='' read -r line || [ -n "$line" ];
 	do
-		line="$(echo "$line" | tr -d '\r')"
-		echo "$line" | grep -q "^\`\`\`" && pre=$((1 - pre)) && line=""
+		line="$(printf "$line\n" | tr -d '\r')"
+		printf "$line\n" | grep -q "^\`\`\`" && pre=$((1 - pre)) && line=""
 
 		# add margins and fold
 		if [ "$pre" = 1 ]
@@ -268,15 +268,13 @@ typesetgmi() {
 			'* '*) sty="$sty_listb$sty_listt" && line="${line#* }";;
 			*) sty='' ;;
 		esac
-		echo "$line" | fold -w "$width" -s | {
+		printf -- "$line\n" | fold -w "$width" -s | {
 			while IFS='' read -r txt
 			do
 				printf "%*s" "$margin" ""
 
 				# shellcheck disable=SC2059
-				printf -- "$sty"
-				echo "$txt"
-				printf '\e[m'
+				printf -- "$sty$txt\n\e[m"
 			done
 		}
 	done
