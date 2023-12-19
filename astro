@@ -1,6 +1,6 @@
 #!/bin/sh
 
-version="0.25.0"
+version="0.25.1"
 
 usage() {
 	echo "astro v$version: Browse the gemini web on the terminal."
@@ -174,7 +174,7 @@ tracefile="$(mktemp -p "$cachedir" -t trace.XXXXXX)"
 debug "read configs"
 
 # Restore terminal
-trap 'tput rmcup && stty echo && rm -f $histfile $linksfile $pagefile > /dev/null 2>&1; exit' EXIT INT HUP
+trap 'rm -f $histfile $linksfile $pagefile $tracefile > /dev/null 2>&1 && tput rmcup && printf "\033[?25h" && stty echo && exit' EXIT INT HUP
 
 stop() {
 	[ "$trace" ] || return
@@ -239,6 +239,7 @@ typesetgmi() {
 	stop
 	while IFS='' read -r line || [ -n "$line" ];
 	do
+		# shellcheck disable=SC2059
 		line="$(printf "$line\n" | tr -d '\r')"
 		printf "$line\n" | grep -q "^\`\`\`" && pre=$((1 - pre)) && line=""
 
@@ -268,25 +269,25 @@ typesetgmi() {
 			'* '*) sty="$sty_listb$sty_listt" && line="${line#* }";;
 			*) sty='' ;;
 		esac
-		printf -- "$line\n" | fold -w "$width" -s | {
-			while IFS='' read -r txt
-			do
-				printf "%*s" "$margin" ""
 
-				# shellcheck disable=SC2059
-				printf -- "$sty$txt\n\033[m"
-			done
-		}
+		# shellcheck disable=SC2059
+		printf -- "$line\n" | fold -w "$width" -s | while IFS='' read -r txt
+		do
+			printf "%*s" "$margin" ""
+
+			# shellcheck disable=SC2059
+			printf -- "$sty$txt\n\033[m"
+		done
 	done
 	stop "typeset"
 }
 
 # some help:
-# \e[;H		move to top 
-# \e[NH 	move to bottom N lines
-# \e[?25l	hide cursor
-# \e[?25h	unhide cursor
-# \e[2K		erase line
+# \033[;H	move to top 
+# \033[NH 	move to bottom N lines
+# \033[?25l	hide cursor
+# \033[?25h	unhide cursor
+# \033[2K	erase line
 pager() {
 	clear
 
@@ -315,12 +316,12 @@ pager() {
 					[ "$pos" -le "$lines" ] && continue
 					line="$(sed "$((pos-lines))q;d" "$1")"
 					pos="$((pos-1))"
-					printf '\e[H\e[L%s\e[%sH\e[2K' "$line" "$lines"
+					printf '\033[H\033[L%s\033[%sH\033[2K' "$line" "$lines"
 					;;
 				# down arrow
 				'[B')
 					[ "$pos" -ge "$l" ] && continue
-					printf '\e[%sH' "$lines"
+					printf '\033[%sH' "$lines"
 					sed "${pos}q;d" "$1"
 					pos="$((pos+1))"
 					;;
@@ -338,7 +339,7 @@ pager() {
 					do
 						line="$(sed "$((pos-lines))q;d" "$1")"
 						pos="$((pos-1))"
-						printf '\e[H\e[L%s\e[%sH\e[2K' "$line" "$lines"
+						printf '\033[H\033[L%s\033[%sH\033[2K' "$line" "$lines"
 					done
 					;;
 				# page down
@@ -354,7 +355,7 @@ pager() {
 					# shellcheck disable=SC2086
 					for i in $(seq 1 "$scroll")
 					do
-						printf '\e[%sH' "$lines"
+						printf '\033[%sH' "$lines"
 						sed "${pos}q;d" "$1"
 						pos="$((pos+1))"
 					done
@@ -384,7 +385,7 @@ pager() {
 			;;
 		"$refreshkey") return ;;
 		"$gokey")
-			printf '\033[?25hEnter link number: '
+			printf '\033[?25h\033[2KEnter link number: '
 			stty echo icanon
 			read -r i <&1
 			debug "selected $i"
