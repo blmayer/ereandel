@@ -274,7 +274,7 @@ typesetgmi() {
 				printf "%*s" "$margin" ""
 
 				# shellcheck disable=SC2059
-				printf -- "$sty$txt\n\e[m"
+				printf -- "$sty$txt\n\033[m"
 			done
 		}
 	done
@@ -291,7 +291,7 @@ pager() {
 	clear
 
 	# hide cursor
-	printf '\e[?25l'
+	printf '\033[?25l'
 
 	# lines columns
 	lines="$(tput lines)"
@@ -362,7 +362,7 @@ pager() {
 			esac ;;
 		"$quitkey") exit 0 ;;
 		"$openkey")
-			printf '\e[%sH\e[?25h\e[2KType url: ' "$lines"
+			printf '\033[%sH\033[?25h\033[2KType url: ' "$lines"
 			stty echo icanon
 			read -r url <&1
 
@@ -373,10 +373,9 @@ pager() {
 			esac
 			return
 			;;
-		# FIXME: dont know how yet
 		"$openlocalkey")
 			# Open local gmi file
-			printf '\e[?25h\e[2KType file path: '
+			printf '\033[?25h\033[2KType file path: '
 			stty echo
 			read -r file <&1
 			typesetgmi < "$file" > "$pagefile"
@@ -385,7 +384,7 @@ pager() {
 			;;
 		"$refreshkey") return ;;
 		"$gokey")
-			printf '\e[?25hEnter link number: '
+			printf '\033[?25hEnter link number: '
 			stty echo icanon
 			read -r i <&1
 			debug "selected $i"
@@ -401,7 +400,7 @@ pager() {
 			;;
 		"$homekey") url="$homepage"; return ;;
 		"$markkey") 
-			printf '\e[?25h\e[KEnter description: (optional)'
+			printf '\033[?25h\033[KEnter description: (optional)'
 			stty echo icanon
 			read -r desc <&1
 			echo "$url $desc" >> "$bookmarkfile"
@@ -410,7 +409,7 @@ pager() {
 		"$gomarkkey")
 			clear
 			cat -n "$bookmarkfile"
-			printf "\e[?25h\e[KEnter link number: "
+			printf "\033[?25h\033[KEnter link number: "
 			stty echo icanon
 			read -r i <&1
 			url="$(sed "${i}q;d" "$bookmarkfile" | cut -d' ' -f1)"
