@@ -2,19 +2,19 @@
 
 PREFIX ?= ~/.local
 BINDIR?=$(PREFIX)/bin
-DOCDIR?=$(PREFIX)/share/doc/astro
+DOCDIR?=$(PREFIX)/share/doc/ereandel
 MANDIR?=$(PREFIX)/share/man/man1
-LICENSEDIR?=$(PREFIX)/share/doc/astro
+LICENSEDIR?=$(PREFIX)/share/doc/ereandel
 
 install:
 	mkdir -p $(BINDIR) $(DOCDIR) $(LICENSEDIR) $(MANDIR)
-	install -m +rx astro -t $(BINDIR)
+	install -m +rx ereandel -t $(BINDIR)
 	install -m +r README.md CONTRIBUTING.md -t $(DOCDIR)
 	install -m +r LICENSE -t $(LICENSEDIR)
-	install -m +r astro.en.1 $(MANDIR)/astro.1
+	install -m +r ereandel.en.1 $(MANDIR)/ereandel.1
 
 uninstall:
-	rm $(BINDIR)/astro
+	rm $(BINDIR)/ereandel
 	rm -rf $(DOCDIR)
 	rm -rf $(LICENSEDIR)
-	rm -f $(MANDIR)/astro.1
+	rm -f $(MANDIR)/ereandel.1

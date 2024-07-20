@@ -1,21 +1,21 @@
 #!/bin/sh
 
-version="0.25.1"
+version="0.26.0"
 
 usage() {
-	echo "astro v$version: Browse the gemini web on the terminal."
+	echo "ereandel v$version: Browse the gemini web on the terminal."
 	echo ""
-	echo "Usage: astro [URL]|[OPTION]"
+	echo "Usage: ereandel [URL]|[OPTION]"
 	echo ""
 	echo "Options:"
 	echo "  -h, --help		show this help"
 	echo "  -v, --version		show version info"
 	echo ""
 	echo "Configuration:"
-	echo "You can setup a config file at ~/.config/astro/astro.conf to configure *astro* the way you like."
+	echo "You can setup a config file at ~/.config/ereandel/ereandel.conf to configure *ereandel* the way you like."
 	echo ""
 	echo "Commands:"
-	echo "These are the default keybindings to use while running astro:"
+	echo "These are the default keybindings to use while running ereandel:"
 	echo ""
 	echo "  q	quit"
 	echo "  g	go to a link"
@@ -30,17 +30,17 @@ usage() {
 	echo "  K	remove bookmark for current url"
 	echo ""
 	echo "Examples:"
-	echo "  astro		Start browsing the default webpage"
-	echo "  astro url	Start browsing url"
-	echo "  astro --help	Show help"
+	echo "  ereandel		Start browsing the default webpage"
+	echo "  ereandel url	Start browsing url"
+	echo "  ereandel --help	Show help"
 	echo ""
 	echo "Report bugs to: bleemayer@gmail.com"
-	echo "Home page: <https://www.github.com/blmayer/astro/>"
-	echo "General help: <https://www.github.com/blmayer/astro/wiki>"
+	echo "Home page: <https://www.github.com/blmayer/ereandel/>"
+	echo "General help: <https://www.github.com/blmayer/ereandel/wiki>"
 }
 
 version() {
-	echo "astro $version"
+	echo "ereandel $version"
 	echo ""
 	echo "Copyright (C) 2021-2023 Brian Mayer."
 	echo "License MIT: MIT License <https://opensource.org/licenses/MIT>"
@@ -90,13 +90,13 @@ tput smcup
 
 # Configuration
 confighome=${XDG_CONFIG_HOME:-$HOME/.config}
-mkdir -p "$confighome/astro"
-configfile="$confighome/astro/astro.conf"
-bookmarkfile="$confighome/astro/bookmarks"
-certdir="$confighome/astro/certs"
+mkdir -p "$confighome/ereandel"
+configfile="$confighome/ereandel/ereandel.conf"
+bookmarkfile="$confighome/ereandel/bookmarks"
+certdir="$confighome/ereandel/certs"
 mkdir -p "$certdir"
 
-cachedir="${XDG_CACHE_HOME:-$HOME/.cache}/astro"
+cachedir="${XDG_CACHE_HOME:-$HOME/.cache}/ereandel"
 
 # Default values
 
@@ -477,7 +477,7 @@ fetch() {
 	debug "requesting $1://$2:$3/$4$5"
 	
 	# set title
-	printf '\033]2;%s\007' "astro (c): $2/$4"
+	printf '\033]2;%s\007' "ereandel (c): $2/$4"
 	
 	echo "$1 $2 $3 $4 $5" >> "$histfile"
 
@@ -499,7 +499,7 @@ fetch() {
 	stop "openssl fetch"
 	stop
 
-	printf '\033]2;%s\007' "astro (r): $2/$4"
+	printf '\033]2;%s\007' "ereandel (r): $2/$4"
 
 	# First line is status and meta information
 	read -r status meta < "$pagefile"
@@ -613,14 +613,14 @@ fetch() {
 	esac
 	debug "charset: $charset"
 
-	printf '\033]2;%s\007' "astro (t): $2/$4"
+	printf '\033]2;%s\007' "ereandel (t): $2/$4"
 	case $meta in
 		"text/gemini"* | "") typesetgmi < "$pagefile" > "$pagefile.gmi"; mv "$pagefile.gmi" "$pagefile" ;;
 		*) ;;
 	esac 
 
 	debug "starting pager"
-	printf '\033]2;%s\007' "astro (l): $2/$4"
+	printf '\033]2;%s\007' "ereandel (l): $2/$4"
 	pager "$pagefile"
 
 	debug "new url: $url"
@@ -637,7 +637,7 @@ fi
 url="${url:-$homepage}"
 while :
 do
-	printf '\033]2;%s\007' "astro (w)"
+	printf '\033]2;%s\007' "ereandel (w)"
 
 	# shellcheck disable=SC2046
 	fetch $(parseurl)

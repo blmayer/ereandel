@@ -1,6 +1,6 @@
-# astro
+# ereandel
 
-![print](https://github.com/blmayer/astro/blob/main/astro.png?raw=true)
+![print](https://github.com/blmayer/ereandel/blob/main/ereandel.png?raw=true)
 > A Gemini web browser using shell script
 
 
@@ -8,10 +8,10 @@
 
 There is an AUR package for archlinux users:
 
-[![astro](https://img.shields.io/aur/version/astro?label=astro&logo=arch-linux)](https://aur.archlinux.org/packages/astro)
-[![astro-git](https://img.shields.io/aur/version/astro-git?label=astro-git&logo=arch-linux)](https://aur.archlinux.org/packages/astro-git)
+[![ereandel](https://img.shields.io/aur/version/ereandel?label=ereandel&logo=arch-linux)](https://aur.archlinux.org/packages/ereandel)
+[![ereandel-git](https://img.shields.io/aur/version/ereandel-git?label=ereandel-git&logo=arch-linux)](https://aur.archlinux.org/packages/ereandel-git)
 
-You can also move the file *astro* to a folder in your PATH variable, 
+You can also move the file *ereandel* to a folder in your PATH variable, 
 or run `make install`, by default it will be installed into *~/.local/bin*.
 Use *PREFIX* to override the install location, e.g.
 
@@ -20,25 +20,25 @@ Use *PREFIX* to override the install location, e.g.
 
 ## Using
 
-Start browsing by running astro with an optional URL:
+Start browsing by running ereandel with an optional URL:
 
-`astro gemini://rawtext.club:1965/~sloum/spacewalk.gmi`
+`ereandel gemini://rawtext.club:1965/~sloum/spacewalk.gmi`
 
 you can omit the protocol and port:
 
-`astro rawtext.club/~sloum/spacewalk.gmi`
+`ereandel rawtext.club/~sloum/spacewalk.gmi`
 
 no arguments takes you to *gemini.circumlunar.space*:
 
-`astro`
+`ereandel`
 
 ### Client certificates
 
-astro can work with client certificates if capsules requires them for authentication.
+ereandel can work with client certificates if capsules requires them for authentication.
 
-astro allows a single client certificate per (sub)domain identified by it's name. If a client cert for a specific domain is available astro will send it to the server with every request.
+ereandel allows a single client certificate per (sub)domain identified by it's name. If a client cert for a specific domain is available ereandel will send it to the server with every request.
 
-When a resource requires a client cert and astro can't find one it will show you a command to create a client cert for the capsule. The certificates are stored in `~/.config/astro/certs/`.
+When a resource requires a client cert and ereandel can't find one it will show you a command to create a client cert for the capsule. The certificates are stored in `~/.config/ereandel/certs/`.
 
 To remove a certificate simply delete the `<domain>.crt` and `<domain>.key` files in the directory mentioned above.
 
@@ -60,12 +60,12 @@ More coming.
 
 ### Configuration
 
-You can setup a config file at `~/.config/astro/astro.conf` to configure *astro* the way you like.
+You can setup a config file at `~/.config/ereandel/ereandel.conf` to configure *ereandel* the way you like.
 
 The file uses a simple `key=value` style, see the complete example for the default values below.
 
 **hints:**
-* `astro` will be appended to `cachehome`, the directory must be writable for your user.
+* `ereandel` will be appended to `cachehome`, the directory must be writable for your user.
 * The `style-` keys must be ANSI style codes.
 
 ```

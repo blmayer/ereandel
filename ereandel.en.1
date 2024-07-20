@@ -1,11 +1,11 @@
-.TH ASTRO "1" "November 2023" "astro 0.25.1" "User Commands"
+.TH EREANDEL "1" "November 2023" "ereandel 0.26.0" "User Commands"
 .SH NAME
-astro \- A Gemini web browser using shell script
+ereandel \- A Gemini web browser using shell script
 .SH SYNOPSIS
-.B astro
+.B ereandel
 [\fI\,URL\/\fR]\fI\,|\/\fR[\fI\,OPTION\/\fR]
 .SH DESCRIPTION
-astro v0.25.1: Browse the gemini web on any POSIX compatible terminal.
+ereandel v0.26.0: Browse the gemini web on any POSIX compatible terminal.
 .SH OPTIONS
 .TP
 \fB\-h\fR, \fB\-\-help\fR
@@ -14,7 +14,7 @@ show this help
 \fB\-v\fR, \fB\-\-version\fR
 show version info
 .SH COMMANDS
-These are the default keybindings to use while running astro:
+These are the default keybindings to use while running ereandel:
 .TP
 \fBq
 quit
@@ -49,24 +49,24 @@ go to a bookmark
 \fBK
 remove bookmark for current url
 .SH ENVIRONMENT
-Astro uses 2 environment variables to help debugging and tracing its execution.
+Ereandel uses 2 environment variables to help debugging and tracing its execution.
 .TP
 \fIdebug
-To start astro in debug mode
+To start ereandel in debug mode
 .TP
 \fItrace
-To start astro with tracing activated
+To start ereandel with tracing activated
 .SH NOTES
 .SS Client certificates
 .PP
-\fBastro\fR can work with client certificates if capsules requires them for authentication.
-\fBastro\fR allows a single client certificate per (sub)domain identified by it's name. If a client cert for a specific domain is available astro will send it to the server with every request.
-When a resource requires a client cert and astro can't find one it will show you a command to create a client cert for the capsule.
-The certificates are stored in \fI$XDG_CONFIG_DIR/astro/certs/\fR.
+\fBereandel\fR can work with client certificates if capsules requires them for authentication.
+\fBereandel\fR allows a single client certificate per (sub)domain identified by it's name. If a client cert for a specific domain is available ereandel will send it to the server with every request.
+When a resource requires a client cert and ereandel can't find one it will show you a command to create a client cert for the capsule.
+The certificates are stored in \fI$XDG_CONFIG_DIR/ereandel/certs/\fR.
 .PP
 To remove a certificate simply delete the \fI<domain>.crt\fR and \fI<domain>.key\fR files in the directory mentioned above.
 .SH CONFIGURATION
-You can setup a config file at \fI$XDG_CONFIG_DIR/astro/astro.conf\fR to configure \fBastro\fR the way you like.
+You can setup a config file at \fI$XDG_CONFIG_DIR/ereandel/ereandel.conf\fR to configure \fBereandel\fR the way you like.
 The file uses a simple \fBkey=value\fR style, see the complete example for the default values below.
 .PP
 .EX
@@ -94,22 +94,22 @@ homekey='H'
 .EE
 .SH EXAMPLES
 .TP
-astro
+ereandel
 Start browsing the default webpage
 .TP
-astro url
+ereandel url
 Start browsing url
 .TP
-astro \-\-help
+ereandel \-\-help
 Show help
 .SH AUTHOR
 Written by Brian Lee Mayer.
 .SH "REPORTING BUGS"
 Report bugs to: bleemayer@gmail.com
 .br
-Home page: <https://www.github.com/blmayer/astro/>
+Home page: <https://www.github.com/blmayer/ereandel/>
 .br
-General help: <https://www.github.com/blmayer/astro/wiki>
+General help: <https://www.github.com/blmayer/ereandel/wiki>
 .SH COPYRIGHT
 Copyright \(co 2021\-2023 Brian Mayer.
 License MIT: MIT License <https://opensource.org/licenses/MIT>
@@ -118,13 +118,13 @@ EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
 MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
 .SH "SEE ALSO"
 The full documentation for
-.B astro
+.B ereandel
 is maintained as a Texinfo manual.  If the
 .B info
 and
-.B astro
+.B ereandel
 programs are properly installed at your site, the command
 .IP
-.B info astro
+.B info ereandel
 .PP
 should give you access to the complete manual.
