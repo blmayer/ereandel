@@ -6,14 +6,31 @@
 
 ## Installing
 
-There is an AUR package for archlinux users:
-
-[![ereandel](https://img.shields.io/aur/version/ereandel?label=ereandel&logo=arch-linux)](https://aur.archlinux.org/packages/ereandel)
-[![ereandel-git](https://img.shields.io/aur/version/ereandel-git?label=ereandel-git&logo=arch-linux)](https://aur.archlinux.org/packages/ereandel-git)
+Debian and Archlinux have packages that can be installed via their package system,
+see the next section if you want.
 
 You can also move the file *ereandel* to a folder in your PATH variable, 
 or run `make install`, by default it will be installed into *~/.local/bin*.
 Use *PREFIX* to override the install location, e.g.
+
+
+### Packages
+
+I'm not the maintainer of the distro packages for this project, if you want to package
+please go ahead. Currently Ereandel is packaged for:
+
+- Archlinux AUR thanks to [guzzisti](https://aur.archlinux.org/account/guzzisti)
+- Debian Sid and testing thanks to [Akash Doppalapudi](mailto:akashdoppalapudi2001@gmail.com)
+
+Packages can be found and installed using your distro's package system.
+
+
+#### Status
+
+[![ereandel](https://img.shields.io/aur/version/ereandel?label=ereandel&logo=arch-linux)](https://aur.archlinux.org/packages/ereandel)
+[![ereandel-git](https://img.shields.io/aur/version/ereandel-git?label=ereandel-git&logo=arch-linux)](https://aur.archlinux.org/packages/ereandel-git)
+[![unstable](https://img.shields.io/debian/v/ereandel/unstable?logo=debian&label=debian%20unstable)](https://packages.debian.org/source/unstable/ereandel)
+[![testing](https://img.shields.io/debian/v/ereandel/testing?logo=debian&label=debian%20testing)](https://packages.debian.org/source/testing/ereandel)
 
 
 
@@ -83,13 +100,6 @@ sty_listt='\033[0m'
 
 ## Meta
 
-This software is a work in progress and may not work as it is intended to.
-
-
-### Contributing
-
-Please read the [contributing file](CONTRIBUTING.md).
-
 
 ### Further works
 
@@ -98,13 +108,13 @@ Please read the [contributing file](CONTRIBUTING.md).
 - Support input
 
 
+### Contributing
+
+Please read the [contributing file](CONTRIBUTING.md).
+
+
+
 ### Inspired by
 
 - [gmi](https://sr.ht/~chambln/gmi/)
 - [bollux](https://sr.ht/~acdw/bollux/)
-
-
-### Packaging
-
-I'm not the maintainer of the AUR packages for this project,
-thanks [guzzisti](https://aur.archlinux.org/account/guzzisti) for the contribution.
