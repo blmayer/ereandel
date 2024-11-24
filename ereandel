@@ -239,9 +239,8 @@ typesetgmi() {
 	stop
 	while IFS='' read -r line || [ -n "$line" ];
 	do
-		# shellcheck disable=SC2059
-		line="$(printf "$line\n" | tr -d '\r')"
-		printf "$line\n" | grep -q "^\`\`\`" && pre=$((1 - pre)) && line=""
+		line="$(printf "%s\n" "$line" | tr -d '\r')"
+		printf "%s\n" "$line" | grep -q "^\`\`\`" && pre=$((1 - pre)) && line=""
 
 		# add margins and fold
 		if [ "$pre" = 1 ]
