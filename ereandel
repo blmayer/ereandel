@@ -175,7 +175,7 @@ debug "read configs"
 
 # Restore terminal
 thetrap() {
-	rm -f $histfile $linksfile $pagefile $tracefile > /dev/null 2>&1
+	rm -f "$histfile" "$linksfile" "$pagefile" "$tracefile" > /dev/null 2>&1
 	tput rmcup
 	printf "\033[?25h"
 	stty echo
