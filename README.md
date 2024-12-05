@@ -28,7 +28,6 @@ Packages can be found and installed using your distro's package system.
 #### Status
 
 [![ereandel](https://img.shields.io/aur/version/ereandel?label=ereandel&logo=arch-linux)](https://aur.archlinux.org/packages/ereandel)
-[![ereandel-git](https://img.shields.io/aur/version/ereandel-git?label=ereandel-git&logo=arch-linux)](https://aur.archlinux.org/packages/ereandel-git)
 [![unstable](https://img.shields.io/debian/v/ereandel/unstable?logo=debian&label=debian%20unstable)](https://packages.debian.org/source/unstable/ereandel)
 [![testing](https://img.shields.io/debian/v/ereandel/testing?logo=debian&label=debian%20testing)](https://packages.debian.org/source/testing/ereandel)
 
