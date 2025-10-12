@@ -20,7 +20,7 @@ I'm not the maintainer of the distro packages for this project, if you want to p
 please go ahead. Currently Ereandel is packaged for:
 
 - Archlinux AUR thanks to [guzzisti](https://aur.archlinux.org/account/guzzisti)
-- Debian Sid and testing thanks to [Akash Doppalapudi](mailto:akashdoppalapudi2001@gmail.com)
+- Debian Sid and testing thanks to [Akash Doppalapudi](https://wiki.debian.org/AkashDoppalapudi)
 
 Packages can be found and installed using your distro's package system.
 
@@ -28,8 +28,9 @@ Packages can be found and installed using your distro's package system.
 #### Status
 
 [![ereandel](https://img.shields.io/aur/version/ereandel?label=ereandel&logo=arch-linux)](https://aur.archlinux.org/packages/ereandel)
-[![unstable](https://img.shields.io/debian/v/ereandel/unstable?logo=debian&label=debian%20unstable)](https://packages.debian.org/source/unstable/ereandel)
+[![testing](https://img.shields.io/debian/v/ereandel/stable?logo=debian&label=debian%20stable)](https://packages.debian.org/source/stable/ereandel)
 [![testing](https://img.shields.io/debian/v/ereandel/testing?logo=debian&label=debian%20testing)](https://packages.debian.org/source/testing/ereandel)
+[![unstable](https://img.shields.io/debian/v/ereandel/unstable?logo=debian&label=debian%20unstable)](https://packages.debian.org/source/unstable/ereandel)
 
 
 
