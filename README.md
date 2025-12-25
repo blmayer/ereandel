@@ -49,6 +49,7 @@ no arguments takes you to *gemini.circumlunar.space*:
 
 `ereandel`
 
+
 ### Client certificates
 
 ereandel can work with client certificates if capsules requires them for authentication.
@@ -58,6 +59,7 @@ ereandel allows a single client certificate per (sub)domain identified by it's n
 When a resource requires a client cert and ereandel can't find one it will show you a command to create a client cert for the capsule. The certificates are stored in `~/.config/ereandel/certs/`.
 
 To remove a certificate simply delete the `<domain>.crt` and `<domain>.key` files in the directory mentioned above.
+
 
 ### Key bindings
 
@@ -74,6 +76,7 @@ To remove a certificate simply delete the `<domain>.crt` and `<domain>.key` file
 - `q` to quit
 
 More coming.
+
 
 ### Configuration
 
@@ -97,6 +100,52 @@ sty_linkt=' => \033[36;3m '
 sty_listb='\033[35;1m  •'
 sty_listt='\033[0m'
 ```
+
+### Themes
+
+You can customize the appearance of ereandel by using different themes. Here are some predefined themes you can use:
+
+
+#### Dark Theme
+
+```
+sty_header1='\033[35;7;1m'
+sty_header2='\033[35;4;1m'
+sty_header3='\033[35;4m'
+sty_quote='\033[2;3m  '
+sty_linkb='\033[35m'
+sty_linkt=' => \033[36;3m '
+sty_listb='\033[35;1m  •'
+sty_listt='\033[0m'
+```
+
+
+#### Light Theme
+
+```
+sty_header1='\033[30;7;1m'
+sty_header2='\033[30;4;1m'
+sty_header3='\033[30;4m'
+sty_quote='\033[2;3m  '
+sty_linkb='\033[30m'
+sty_linkt=' => \033[34;3m '
+sty_listb='\033[30;1m  •'
+sty_listt='\033[0m'
+```
+
+#### Solarized Theme
+
+```
+sty_header1='\033[38;5;136;7;1m'
+sty_header2='\033[38;5;136;4;1m'
+sty_header3='\033[38;5;136;4m'
+sty_quote='\033[2;3m  '
+sty_linkb='\033[38;5;136m'
+sty_linkt=' => \033[38;5;141;3m '
+sty_listb='\033[38;5;136;1m  •'
+sty_listt='\033[0m'
+```
+
 
 ## Meta
 
