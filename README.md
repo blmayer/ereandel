@@ -20,7 +20,7 @@ I'm not the maintainer of the distro packages for this project, if you want to p
 please go ahead. Currently Ereandel is packaged for:
 
 - Archlinux AUR thanks to [guzzisti](https://aur.archlinux.org/account/guzzisti)
-- Debian Sid and testing thanks to [Akash Doppalapudi](https://wiki.debian.org/AkashDoppalapudi)
+- Debian thanks to [Akash Doppalapudi](https://wiki.debian.org/AkashDoppalapudi)
 
 Packages can be found and installed using your distro's package system.
 
