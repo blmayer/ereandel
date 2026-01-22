@@ -211,12 +211,12 @@ parseurl() {
 	fi
 	debug "url: $url"
 
-	proto="$(echo "$proto" | sed -e 's,:\?//,,g')"
+	proto="$(echo "$proto" | sed -e 's,://,,g')"
 	user="$(echo "$url" | grep @ | cut -d@ -f1)"
 	hostport="$(echo "$url" | sed -e "s/$user@//g" | cut -d/ -f1)"
 	host="$(echo "$hostport" | sed -e 's,:.*,,g')"
 	port="$(echo "$hostport" | sed -e 's,^.*:,:,g' -e 's,.*:\([0-9]*\).*,\1,g' -e 's,[^0-9],,g')"
-	path="$(echo "${url#/*}" | sed "s@/\?$hostport@@")"
+	path="$(echo "$url" | sed "s@^$hostport@@")"
 
 	debug "parsed: proto: ${proto:-gemini} host: $host port: ${port:-1965} path: ${path#/*} rest: $rest"
 	echo "${proto:-gemini}" "$host" "${port:-1965}" "${path#/*}" "$rest"
@@ -493,7 +493,7 @@ fetch() {
 	read -r status meta < "$pagefile"
 	status="$(echo "$status" | tr -d '\r\n')"
 	meta="$(echo "$meta" | tr -d '\r\n')"
-	sed -i '1d' "$pagefile"
+	tail -n +2 "$pagefile" > "$pagefile.tmp" && mv "$pagefile.tmp" "$pagefile"
 	debug "response status - meta: $status - $meta"
 
 	# Validate
