@@ -1,6 +1,6 @@
 # ereandel
 
-![print](https://github.com/blmayer/ereandel/blob/main/ereandel.png?raw=true)
+![print](https://github.com/blmayer/ereandel/blob/main/screenshot.png?raw=true)
 > A Gemini web browser using shell script
 
 
