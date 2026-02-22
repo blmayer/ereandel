@@ -264,13 +264,14 @@ typesetgmi() {
 			*) sty='' ;;
 		esac
 
-		# shellcheck disable=SC2059
 		printf -- "%s\n" "$line" | fold -w "$width" -s | while IFS='' read -r txt
 		do
 			printf "%*s" "$margin" ""
 
+			# The '--' here is to make sure the next string is treated as the 
+			# format string, even if $sty begins with a '-'.
 			# shellcheck disable=SC2059
-			printf -- "$sty$txt\n\033[m"
+			printf -- "$sty%s\n\033[m" "$txt"
 		done
 	done
 }
